@@ -11,7 +11,7 @@ interface MarkdownContentProps {
 
 export function MarkdownContent({ content, className }: MarkdownContentProps) {
 	return (
-		<div className={cn("prose dark:prose-invert", className)}>
+		<div className={cn("prose dark:prose-invert max-w-none", className)}>
 			<ReactMarkdown
 				remarkPlugins={[remarkGfm]}
 				rehypePlugins={[rehypeRaw, rehypeSanitize]}
@@ -39,7 +39,7 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
 						<code
 							className={cn(
 								"rounded bg-muted px-1 py-0.5 font-mono text-sm",
-								"block p-2",
+								"block p-2 overflow-x-auto whitespace-pre-wrap break-words",
 								className,
 							)}
 							{...props}
@@ -48,7 +48,7 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
 						</code>
 					),
 					pre: ({ children }) => (
-						<pre className="mb-2 overflow-x-auto rounded bg-muted p-2">
+						<pre className="mb-2 overflow-x-auto rounded bg-muted p-2 whitespace-pre-wrap break-words">
 							{children}
 						</pre>
 					),
