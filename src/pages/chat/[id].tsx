@@ -217,6 +217,12 @@ export default function Page({ threadId }: { threadId: string }) {
 			`[handleSendMessageToCompletion]: ${senderRole} is sending a message: ${newMessage}`,
 		);
 
+		await saveMessageMutation.mutateAsync({
+			sessionId: threadId,
+			message: newMessage,
+			role: senderRole,
+		});
+
 		setMessages((prevMessages) => {
 			return [
 				...prevMessages,
@@ -231,12 +237,6 @@ export default function Page({ threadId }: { threadId: string }) {
 					isCurrentUser: true,
 				},
 			];
-		});
-
-		await saveMessageMutation.mutateAsync({
-			sessionId: threadId,
-			message: newMessage,
-			role: senderRole,
 		});
 	};
 
