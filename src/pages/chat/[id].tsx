@@ -1,16 +1,21 @@
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChatBox } from "~/components/chat/ChatBox";
 
 import axios, { type AxiosResponse } from "axios";
+import { StepBackIcon } from "lucide-react";
 import type { GetServerSideProps } from "next";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
+import AppHeader from "~/components/site-header";
+import { Button } from "~/components/ui/button";
+import { Card, CardTitle } from "~/components/ui/card";
+import { Skeleton } from "~/components/ui/skeleton";
 import { env } from "~/env";
 import { auth } from "~/server/auth";
-import { AppHeader } from "../dashboard";
-import Link from "next/link";
-import { Button } from "~/components/ui/button";
-import { StepBackIcon } from "lucide-react";
+import type { UIMessage, UIThread } from "~/types/chat";
+import { api } from "~/utils/api";
+import SiteFooter from "~/components/site-footer";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await auth(context);
@@ -24,90 +29,75 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 	const email = session.user.email;
 	const password = "password";
 
-	const registerResponse = await axios
-		.post(env.NEXT_PUBLIC_BACKEND_URL + "/auth/register", {
-			email,
-			password,
-		})
-		.catch(console.error);
+	let accessToken = context.req.cookies.access_token;
 
-	const loginResponse: AxiosResponse<{ message: string }> = await axios.post(
-		env.NEXT_PUBLIC_BACKEND_URL + "/auth/login",
-		{
-			email,
-			password,
-		},
-	);
+	if (!accessToken) {
+		const registerResponse = await axios
+			.post(env.NEXT_PUBLIC_BACKEND_URL + "/auth/register", {
+				email,
+				password,
+			})
+			.catch(console.error);
 
-	const accessToken = loginResponse.data.message;
+		const loginResponse: AxiosResponse<{ message: string }> = await axios.post(
+			env.NEXT_PUBLIC_BACKEND_URL + "/auth/login",
+			{
+				email,
+				password,
+			},
+		);
+
+		accessToken = loginResponse.data.message;
+	}
 
 	context.res.setHeader("Set-Cookie", [
-		`access_token=${loginResponse.data.message}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=3600`,
+		`access_token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=3600`,
 	]);
 
 	// Extract the id parameter from the URL
 	const { id } = context.params!;
 
 	return {
-		props: { id },
+		props: { threadId: id },
 	};
 };
 
-type Message = {
-	id: number;
-	sender: string;
-	avatar?: string;
-	content: string;
-	timestamp: string;
-	isCurrentUser: boolean;
-};
-
-type Thread = {
-	id: number;
-	name: string;
-	avatar: string;
-	lastMessage: string;
-	unread: number;
-	messages: Message[];
-};
-
-export default function Page({ id }: { id: string }) {
-	const router = useRouter();
+export default function Page({ threadId }: { threadId: string }) {
 	const { data: session } = useSession();
-	const [threads, setThreads] = useState<Thread[]>([]);
+	const [messages, setMessages] = useState<UIMessage[]>([]);
 	const [streamingMessage, setStreamingMessage] = useState<string>("");
-	const [isStreaming, setIsStreaming] = useState(false);
+
 	const [isLoading, setIsLoading] = useState(false);
 
-	const activeThreadId = parseInt(id);
-	const activeThread = threads.find((thread) => thread.id === activeThreadId);
+	const { data: activeThread } = api.agent.getThread.useQuery({ threadId });
+
+	useEffect(() => {
+		if (activeThread) {
+			setMessages([...activeThread.messages]);
+		}
+	}, [activeThread]);
+
+	console.log("messages:", messages);
 
 	const handleSendMessage = async (newMessage: string) => {
-		const currentCount = threads.length;
+		console.log("messages:", messages);
+		console.log("adding new message:", newMessage);
+		const currentCount = messages.length;
 
-		// Add user message immediately
-		const prevUpdatedThreads = threads.map((thread) => {
-			if (thread.id === activeThreadId) {
-				return {
-					...thread,
-					messages: [
-						...thread.messages,
-						{
-							id: currentCount + 1,
-							sender: "You",
-							content: newMessage,
-							timestamp: "Just now",
-							isCurrentUser: true,
-						},
-					],
-					lastMessage: newMessage,
-				};
-			}
-			return thread;
+		setMessages((prevMessages) => {
+			return [
+				...prevMessages,
+				{
+					id: currentCount + 1,
+					sender: "user",
+					content: newMessage,
+					timestamp: new Date().toISOString(),
+					role: "user",
+					isCurrentUser: true,
+				},
+			];
 		});
 
-		setThreads(prevUpdatedThreads);
-		setIsStreaming(true);
 		setIsLoading(true);
 		setStreamingMessage("");
 
@@ -116,27 +106,34 @@ export default function Page({ id }: { id: string }) {
 				return;
 			}
 
-			const loginResponse = await fetch(
-				`${env.NEXT_PUBLIC_BACKEND_URL}/auth/login`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
+			let accessToken = document.cookie
+				.split("; ")
+				.find((row) => row.startsWith("access_token="))
+				?.split("=")[1];
+
+			if (!accessToken) {
+				const loginResponse = await fetch(
+					`${env.NEXT_PUBLIC_BACKEND_URL}/auth/login`,
+					{
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							email: session?.user.email,
+							password: "password",
+						}),
 					},
-					body: JSON.stringify({
-						email: session?.user.email,
-						password: "password",
-					}),
-				},
-			);
+				);
 
-			if (!loginResponse.ok) {
-				console.error("Login failed:", await loginResponse.text());
-				throw new Error("Login failed");
+				if (!loginResponse.ok) {
+					console.error("Login failed:", await loginResponse.text());
+					throw new Error("Login failed");
+				}
+
+				const loginData = await loginResponse.json();
+				accessToken = loginData.message;
 			}
-
-			const loginData = await loginResponse.json();
-			const accessToken = loginData.message;
 
 			if (!accessToken) {
 				throw new Error("No access token found");
@@ -153,7 +150,7 @@ export default function Page({ id }: { id: string }) {
 					},
 					body: JSON.stringify({
 						message: newMessage,
-						session_id: `thread-${id}`,
+						session_id: `thread-${threadId}`,
 					}),
 				},
 			);
@@ -200,69 +197,75 @@ export default function Page({ id }: { id: string }) {
 
 				// Ensure we have the final message before proceeding
 				console.log("Stream complete, final message:", completeMessage);
-
 				// Update threads with the complete message
-				setThreads((prevThreads) =>
-					prevThreads.map((thread) => {
-						if (thread.id === activeThreadId) {
-							return {
-								...thread,
-								messages: [
-									...thread.messages,
-									{
-										id: currentCount + 2,
-										sender: "Agent",
-										content: completeMessage,
-										timestamp: "Just now",
-										isCurrentUser: false,
-									},
-								],
-								lastMessage: completeMessage,
-							};
-						}
-						return thread;
-					}),
-				);
+				setMessages((prevMessages) => {
+					return [
+						...prevMessages,
+						{
+							id: currentCount + 2,
+							sender: "Path",
+							content: completeMessage,
+							timestamp: new Date().toISOString(),
+							role: "assistant",
+							isCurrentUser: false,
+						},
+					];
+				});
 			} catch (error) {
 				console.error("Error reading stream:", error);
 				throw error;
 			} finally {
 				reader.releaseLock();
-				setIsStreaming(false);
 				setIsLoading(false);
 				setStreamingMessage(""); // Clear the streaming message
 			}
 		} catch (error) {
 			console.error("Error in streaming:", error);
-			setIsStreaming(false);
 			setIsLoading(false);
 		}
 	};
 
 	return (
 		<div className="flex flex-col min-h-screen w-full h-auto rounded-lg border bg-background">
-			{/* <ChatSidebar
-				threads={threads}
-				activeThreadId={activeThreadId}
-				onThreadSelect={handleThreadSelect}
-			/> */}
 			<AppHeader />
-			<div className="flex items-center justify-between px-5 pt-2">
-				<Link href="/chat">
-					<Button className="py-1 h-auto">
-						<StepBackIcon className="size-4" />
+			<div className="flex items-center justify-end px-5 pt-2">
+				<Button asChild className="py-2 h-auto">
+					<Link href="/chats">
+						<StepBackIcon className="size-4 mr-2" />
 						Back to Chats
-					</Button>
-				</Link>
+					</Link>
+				</Button>
 			</div>
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 w-full h-full grow">
-				<ChatBox
-					activeThread={activeThread}
-					onSendMessage={handleSendMessage}
-					streamingMessage={streamingMessage}
-					isLoading={isLoading}
-				/>
+				{activeThread && (
+					<ChatBox
+						activeThread={activeThread}
+						messages={messages}
+						onSendMessage={handleSendMessage}
+						streamingMessage={streamingMessage}
+						isLoading={isLoading}
+					/>
+				)}
+				{!activeThread && (
+					<Card className="w-full h-full p-4 gap-2">
+						<Skeleton className="w-full h-full" />
+					</Card>
+				)}
+				<Card className="w-full h-full p-4 gap-2">
+					<CardTitle className="p-0">Assistant</CardTitle>
+					<Skeleton className="w-full h-32" />
+
+					<CardTitle className="p-0">Knowledge Base</CardTitle>
+					<Skeleton className="w-full h-32" />
+
+					<CardTitle className="p-0">Notes</CardTitle>
+					<Skeleton className="w-full h-32" />
+
+					<CardTitle className="p-0">Tools</CardTitle>
+					<Skeleton className="w-full min-h-32 grow" />
+				</Card>
 			</div>
+			<SiteFooter />
 		</div>
 	);
 }

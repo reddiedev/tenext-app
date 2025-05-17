@@ -2,15 +2,16 @@ import React, { useState } from "react";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import type { Thread } from "~/types/chat";
+import type { UIThread, UIMessage } from "~/types/chat";
 import { MessageBox } from "./MessageBox";
 import { LoadingMessage } from "./LoadingMessage";
 import { StreamingMessage } from "./StreamingMessage";
+import { Card, CardTitle, CardHeader } from "../ui/card";
 
 interface ChatBoxProps {
-	activeThread: Thread | undefined;
+	activeThread: UIThread | undefined;
+	messages: UIMessage[];
 	onSendMessage: (message: string) => void;
 	streamingMessage?: string;
 	isLoading?: boolean;
@@ -19,6 +20,7 @@ interface ChatBoxProps {
 
 export function ChatBox({
 	activeThread,
+	messages,
 	onSendMessage,
 	streamingMessage,
 	isLoading,
@@ -52,29 +54,16 @@ export function ChatBox({
 	}
 
 	return (
-		<div className={cn("flex w-full flex-col", className)}>
+		<Card className={cn("flex w-full flex-col space-y-0 gap-0 p-4", className)}>
 			{/* Chat header */}
-			<div className="border-b p-3">
-				<div className="flex items-center gap-2">
-					<Avatar>
-						<AvatarImage src={activeThread.avatar} alt={activeThread.name} />
-						<AvatarFallback>
-							{activeThread.name
-								.split(" ")
-								.map((n: string) => n[0])
-								.join("")}
-						</AvatarFallback>
-					</Avatar>
-					<div>
-						<p className="font-medium">{activeThread.name}</p>
-					</div>
-				</div>
-			</div>
+			<CardHeader className="p-0">
+				<CardTitle className=" p-0">{activeThread.title}</CardTitle>
+			</CardHeader>
 
 			{/* Messages */}
-			<ScrollArea className="flex-1 p-4">
+			<ScrollArea className="flex-1 p-4 max-h-[35rem]">
 				<div className="flex flex-col gap-3">
-					{activeThread.messages.map((message) => (
+					{messages.map((message) => (
 						<MessageBox key={message.id} message={message} />
 					))}
 
@@ -99,6 +88,6 @@ export function ChatBox({
 					<Button onClick={handleSendMessage}>Send</Button>
 				</div>
 			</div>
-		</div>
+		</Card>
 	);
 }

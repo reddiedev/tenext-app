@@ -27,6 +27,9 @@ const config = {
 			{
 				hostname: "lh3.googleusercontent.com",
 			},
+			{
+				hostname: "i.pravatar.cc",
+			},
 		],
 	},
 

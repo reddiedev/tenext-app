@@ -25,7 +25,7 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { toast } from "sonner";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { Separator } from "~/components/ui/separator";
 
@@ -40,6 +40,7 @@ const formSchema = z.object({
 });
 
 export function SigninForm() {
+	const { data: session } = useSession();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isSuccess, setIsSuccess] = useState(false);
 
@@ -77,8 +78,6 @@ export function SigninForm() {
 			setIsSubmitting(false);
 			return;
 		}
-
-		console.log(result);
 
 		toast.success("Signed in successfully");
 		setIsSuccess(true);
@@ -179,11 +178,11 @@ export function SigninForm() {
 					<Separator className="w-full mt-4" />
 
 					<Button
-						onClick={async () =>
+						onClick={async () => {
 							await signIn("google", {
-								callbackUrl: "/dashboard",
-							})
-						}
+								callbackUrl: "/chats",
+							});
+						}}
 						variant="outline"
 						className="w-full"
 					>

@@ -71,6 +71,9 @@ dependencies:
   clsx:
     specifier: ^2.1.1
     version: 2.1.1
+  dayjs:
+    specifier: ^1.11.13
+    version: 1.11.13
   lucide-react:
     specifier: ^0.511.0
     version: 0.511.0(react@19.1.0)
@@ -2076,6 +2079,10 @@ packages:
   /d3-timer@3.0.1:
     resolution: {integrity: sha512-ndfJ/JxxMd3nw31uyKoY2naivF+r29V+Lc0svZxe1JvvIRmi8hUsrMvdOwgS1o6uBHmiz91geQ0ylPP0aj1VUA==}
     engines: {node: '>=12'}
+    dev: false
+
+  /dayjs@1.11.13:
+    resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
     dev: false
 
   /debug@4.4.1:

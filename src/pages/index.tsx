@@ -9,7 +9,7 @@ import Link from "next/link";
 
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
-
+import { SiteFooter } from "~/components/site-footer";
 const features = [
 	{ id: 1, name: "24/7 AI-powered support" },
 	{ id: 2, name: "Reduce response time by 80%" },
@@ -139,6 +139,7 @@ export default function Page() {
 	return (
 		<main>
 			<HeroSection />
+			<SiteFooter />
 		</main>
 	);
 }

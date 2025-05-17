@@ -1,11 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Card, CardContent } from "~/components/ui/card";
 import { cn } from "~/lib/utils";
-import type { Message } from "~/types/chat";
+import type { UIMessage } from "~/types/chat";
 import { MarkdownContent } from "./MarkdownContent";
+import dayjs from "dayjs";
 
 interface MessageBoxProps {
-	message: Message;
+	message: UIMessage;
 }
 
 export function MessageBox({ message }: MessageBoxProps) {
@@ -49,7 +50,7 @@ export function MessageBox({ message }: MessageBoxProps) {
 					</CardContent>
 				</Card>
 				<span className="mt-1 text-xs text-muted-foreground">
-					{message.timestamp}
+					{dayjs(message.timestamp).format("HH:mm")}
 				</span>
 			</div>
 		</div>

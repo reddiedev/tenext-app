@@ -1,49 +1,18 @@
 "use client";
 
-import * as React from "react";
-import { useState, Suspense } from "react";
 import {
 	Activity,
 	ArrowUpDown,
-	Bell,
 	Clock,
-	MoreHorizontal,
 	MessageSquare,
-	Search,
+	MoreHorizontal,
 	ThumbsUp,
-	BringToFront,
 } from "lucide-react";
-import Image from "next/image";
+import * as React from "react";
+import { Suspense, useState } from "react";
 
-import { cn } from "~/lib/utils";
-import { Button } from "~/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "~/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Skeleton } from "~/components/ui/skeleton";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "~/components/ui/table";
-import { Badge } from "~/components/ui/badge";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
-import { Input } from "~/components/ui/input";
+import type { GetServerSideProps } from "next";
+import { useSession } from "next-auth/react";
 import {
 	Area,
 	AreaChart,
@@ -59,10 +28,37 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { signOut, useSession } from "next-auth/react";
+import AppHeader from "~/components/site-header";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "~/components/ui/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { Skeleton } from "~/components/ui/skeleton";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "~/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { cn } from "~/lib/utils";
 import { auth } from "~/server/auth";
-import type { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
+import SiteFooter from "~/components/site-footer";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await auth(context);
@@ -71,15 +67,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		return {
 			redirect: {
 				destination: "/sign-in",
-				permanent: false,
-			},
-		};
-	}
-
-	if (session.user.role !== "admin") {
-		return {
-			redirect: {
-				destination: "/home",
 				permanent: false,
 			},
 		};
@@ -692,74 +679,6 @@ function TableSkeleton() {
 	);
 }
 
-// App Header Component
-export function AppHeader() {
-	const { data: session } = useSession();
-	const router = useRouter();
-	return (
-		<header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-			<div className="flex flex-1 items-center gap-4 md:gap-8">
-				{router.pathname == "/dashboard" && (
-					<div className="relative w-full max-w-md">
-						<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-						<Input
-							type="search"
-							placeholder="Search tickets, customers..."
-							className="w-full bg-background pl-8 md:w-[300px] lg:w-[400px]"
-						/>
-					</div>
-				)}
-				{router.pathname.includes("chat") && (
-					<div className="flex items-center space-x-2 w-full max-w-md">
-						<BringToFront className="size-5 text-muted-foreground" />
-						<span className="text-lg font-bold">Path</span>
-					</div>
-				)}
-			</div>
-			<div className="flex items-center gap-4">
-				<Button variant="outline" size="icon" className="relative">
-					<Bell className="h-4 w-4" />
-					<span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-						4
-					</span>
-				</Button>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="icon" className="rounded-full">
-							<Image
-								src={
-									session?.user?.image || "/placeholder.svg?height=32&width=32"
-								}
-								width={32}
-								height={32}
-								alt="Avatar"
-								className="rounded-full"
-							/>
-							<span className="sr-only">Toggle user menu</span>
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuLabel className="flex flex-col">
-							<span className="text-sm font-medium">My Account</span>
-							<span className="text-xs text-muted-foreground">
-								{session?.user?.email}
-							</span>
-						</DropdownMenuLabel>
-
-						<DropdownMenuSeparator />
-						<DropdownMenuItem>Profile</DropdownMenuItem>
-						<DropdownMenuItem>Settings</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => signOut()}>
-							Logout
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</div>
-		</header>
-	);
-}
-
 // Main Dashboard Page Component
 export default function Page() {
 	const { data: session } = useSession();
@@ -776,8 +695,9 @@ export default function Page() {
 					<TabsList>
 						<TabsTrigger value="overview">Overview</TabsTrigger>
 						<TabsTrigger value="analytics">Analytics</TabsTrigger>
-						<TabsTrigger value="tickets">Tickets</TabsTrigger>
+						<TabsTrigger value="chats">Chats</TabsTrigger>
 						<TabsTrigger value="agents">Agents</TabsTrigger>
+						<TabsTrigger value="system">System</TabsTrigger>
 					</TabsList>
 					<TabsContent value="overview" className="space-y-4">
 						<Suspense fallback={<StatsCardsSkeleton />}>
@@ -870,18 +790,18 @@ export default function Page() {
 							</CardContent>
 						</Card>
 					</TabsContent>
-					<TabsContent value="tickets" className="space-y-4">
+					<TabsContent value="chats" className="space-y-4">
 						<Card>
 							<CardHeader>
-								<CardTitle>All Tickets</CardTitle>
+								<CardTitle>All Chats</CardTitle>
 								<CardDescription>
-									Manage and view all support tickets
+									Manage and view all support chats
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
 								<div className="h-[400px] flex items-center justify-center border rounded-md">
 									<p className="text-muted-foreground">
-										Tickets management coming soon
+										Chats management coming soon
 									</p>
 								</div>
 							</CardContent>
@@ -905,6 +825,7 @@ export default function Page() {
 						</Card>
 					</TabsContent>
 				</Tabs>
+				<SiteFooter />
 			</main>
 		</div>
 	);
