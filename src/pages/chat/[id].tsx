@@ -1,17 +1,18 @@
 import React, { useState } from "react";
-import { cn } from "~/lib/utils";
-import { Button } from "~/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-} from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { ScrollArea } from "~/components/ui/scroll-area";
-import { Separator } from "~/components/ui/separator";
-import { MessageSquare } from "lucide-react";
+import { ChatSidebar } from "~/components/chat/ChatSidebar";
+import { ChatBox } from "~/components/chat/ChatBox";
+import { useRouter } from "next/router";
+
+import type { GetServerSideProps, NextPage } from "next";
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+	// Extract the id parameter from the URL
+	const { id } = context.params!;
+
+	return {
+		props: { id },
+	};
+};
 
 // Sample data for threads and messages
 const initialThreads = [
@@ -105,16 +106,20 @@ const initialThreads = [
 	},
 ];
 
-export default function Page() {
+export default function Page({ id }: { id: string }) {
+	const router = useRouter();
+
 	const [threads, setThreads] = useState(initialThreads);
-	const [activeThreadId, setActiveThreadId] = useState(1);
-	const [newMessage, setNewMessage] = useState("");
+	const [activeThreadId, setActiveThreadId] = useState(parseInt(id));
 
 	const activeThread = threads.find((thread) => thread.id === activeThreadId);
 
-	const handleSendMessage = () => {
-		if (!newMessage.trim()) return;
+	const handleThreadSelect = (threadId: number) => {
+		setActiveThreadId(threadId);
+		router.push(`/chat/${threadId}`);
+	};
 
+	const handleSendMessage = (newMessage: string) => {
 		const updatedThreads = threads.map((thread) => {
 			if (thread.id === activeThreadId) {
 				return {
@@ -136,157 +141,20 @@ export default function Page() {
 		});
 
 		setThreads(updatedThreads);
-		setNewMessage("");
-	};
-
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "Enter" && !e.shiftKey) {
-			e.preventDefault();
-			handleSendMessage();
-		}
 	};
 
 	return (
-		<div className="flex h-[600px] w-full max-w-4xl rounded-lg border bg-background shadow">
-			{/* Sidebar with threads */}
-			<div className="w-1/3 border-r">
-				<div className="p-4 font-semibold">
-					<div className="flex items-center">
-						<MessageSquare className="mr-2 h-5 w-5" />
-						<h2>Conversations</h2>
-					</div>
-				</div>
-				<Separator />
-				<ScrollArea className="h-[calc(600px-57px)]">
-					{threads.map((thread) => (
-						<div
-							key={thread.id}
-							className={cn(
-								"flex cursor-pointer items-center gap-3 p-3 hover:bg-muted/50",
-								activeThreadId === thread.id && "bg-muted",
-							)}
-							onClick={() => setActiveThreadId(thread.id)}
-						>
-							<Avatar>
-								<AvatarImage src={thread.avatar} alt={thread.name} />
-								<AvatarFallback>
-									{thread.name
-										.split(" ")
-										.map((n) => n[0])
-										.join("")}
-								</AvatarFallback>
-							</Avatar>
-							<div className="flex-1 overflow-hidden">
-								<div className="flex items-center justify-between">
-									<p className="font-medium">{thread.name}</p>
-									{thread.unread > 0 && (
-										<span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-											{thread.unread}
-										</span>
-									)}
-								</div>
-								<p className="truncate text-sm text-muted-foreground">
-									{thread.lastMessage}
-								</p>
-							</div>
-						</div>
-					))}
-				</ScrollArea>
-			</div>
-
-			{/* Main chat area */}
-			<div className="flex w-2/3 flex-col">
-				{activeThread ? (
-					<>
-						{/* Chat header */}
-						<div className="border-b p-3">
-							<div className="flex items-center gap-2">
-								<Avatar>
-									<AvatarImage
-										src={activeThread.avatar}
-										alt={activeThread.name}
-									/>
-									<AvatarFallback>
-										{activeThread.name
-											.split(" ")
-											.map((n) => n[0])
-											.join("")}
-									</AvatarFallback>
-								</Avatar>
-								<div>
-									<p className="font-medium">{activeThread.name}</p>
-								</div>
-							</div>
-						</div>
-
-						{/* Messages */}
-						<ScrollArea className="flex-1 p-4">
-							<div className="flex flex-col gap-3">
-								{activeThread.messages.map((message) => (
-									<div
-										key={message.id}
-										className={cn(
-											"flex gap-2",
-											message.isCurrentUser && "justify-end",
-										)}
-									>
-										{!message.isCurrentUser && (
-											<Avatar className="h-8 w-8">
-												<AvatarImage
-													src={message.avatar}
-													alt={message.sender}
-												/>
-												<AvatarFallback>
-													{message.sender
-														.split(" ")
-														.map((n) => n[0])
-														.join("")}
-												</AvatarFallback>
-											</Avatar>
-										)}
-										<div className="flex flex-col">
-											<Card
-												className={cn(
-													"max-w-[80%]",
-													message.isCurrentUser
-														? "bg-primary text-primary-foreground"
-														: "bg-muted",
-												)}
-											>
-												<CardContent className="p-3">
-													<p>{message.content}</p>
-												</CardContent>
-											</Card>
-											<span className="mt-1 text-xs text-muted-foreground">
-												{message.timestamp}
-											</span>
-										</div>
-									</div>
-								))}
-							</div>
-						</ScrollArea>
-
-						{/* Message input */}
-						<div className="border-t p-3">
-							<div className="flex gap-2">
-								<Input
-									placeholder="Type a message..."
-									value={newMessage}
-									onChange={(e) => setNewMessage(e.target.value)}
-									onKeyDown={handleKeyDown}
-									className="flex-1"
-								/>
-								<Button onClick={handleSendMessage}>Send</Button>
-							</div>
-						</div>
-					</>
-				) : (
-					<div className="flex h-full items-center justify-center">
-						<p className="text-muted-foreground">
-							Select a conversation to start chatting
-						</p>
-					</div>
-				)}
+		<div className="flex flex-col min-h-screen w-full h-auto rounded-lg border bg-background">
+			{/* <ChatSidebar
+				threads={threads}
+				activeThreadId={activeThreadId}
+				onThreadSelect={handleThreadSelect}
+			/> */}
+			<div className="grid grid-cols-2 gap-2 p-2 w-full h-full grow">
+				<ChatBox
+					activeThread={activeThread}
+					onSendMessage={handleSendMessage}
+				/>
 			</div>
 		</div>
 	);
