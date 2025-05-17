@@ -250,7 +250,7 @@ export default function Page({ threadId }: { threadId: string }) {
 					</Card>
 				)}
 				{session?.user.role !== "user" && (
-					<Card className="w-full h-full p-4 gap-2">
+					<Card className="w-full h-full p-4 gap-2 flex flex-col">
 						<div className="grid grid-cols-2 gap-2">
 							<div className="flex flex-col space-y-1">
 								<CardTitle className="p-0">Summary</CardTitle>
@@ -277,11 +277,12 @@ export default function Page({ threadId }: { threadId: string }) {
 								<Skeleton className="w-full h-32" />
 							</div>
 						</div>
-						<div className="flex flex-col space-y-1">
+
+						<div className="flex flex-col space-y-1 grow">
 							<CardTitle className="p-0">
 								Solutions Builder (solution_agent)
 							</CardTitle>
-							<Skeleton className="w-full h-32" />
+							<Skeleton className="w-full min-h-32 h-full" />
 						</div>
 					</Card>
 				)}
