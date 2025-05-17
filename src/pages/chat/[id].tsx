@@ -301,43 +301,41 @@ export default function Page({ threadId }: { threadId: string }) {
 						</div>
 
 						<CardTitle className="p-0 pt-5">Tools</CardTitle>
-						<div className="grid grid-cols-2 gap-2">
-							<div className="flex flex-col space-y-1">
-								<CardTitle className="p-0">
-									Support Quality (rate_agent)
-								</CardTitle>
-								{rateAgentMessage !== "" && (
-									<CardContent className="px-3 py-2 overflow-hidden">
-										<MarkdownContent
-											content={rateAgentMessage}
-											className="break-words"
-										/>
-									</CardContent>
-								)}
-								{rateAgentMessage === "" && (
-									<Skeleton className="w-full h-32" />
-								)}
-							</div>
-							<div className="flex flex-col space-y-1">
-								<CardTitle className="p-0">
-									Empathy Score (suggest_agent )
-								</CardTitle>
-								{suggestAgentMessage !== "" && (
-									<CardContent className="px-3 py-2 overflow-hidden">
-										<MarkdownContent
-											content={suggestAgentMessage}
-											className="break-words"
-										/>
-									</CardContent>
-								)}
-								{suggestAgentMessage === "" && (
-									<Skeleton className="w-full h-32" />
-								)}
-							</div>
-						</div>
+
+						<Card className="flex flex-col space-y-1">
+							<CardTitle className="p-0 px-3">
+								Support Quality (rate_agent)
+							</CardTitle>
+							{rateAgentMessage !== "" && (
+								<CardContent className="px-3 py-2 overflow-hidden">
+									<MarkdownContent
+										content={rateAgentMessage}
+										className="break-words"
+									/>
+								</CardContent>
+							)}
+							{rateAgentMessage === "" && <Skeleton className="w-full h-32" />}
+						</Card>
+
+						<Card className="flex flex-col space-y-1">
+							<CardTitle className="p-0 px-3">
+								Empathy Score (suggest_agent )
+							</CardTitle>
+							{suggestAgentMessage !== "" && (
+								<CardContent className="px-3 py-2 overflow-hidden">
+									<MarkdownContent
+										content={suggestAgentMessage}
+										className="break-words"
+									/>
+								</CardContent>
+							)}
+							{suggestAgentMessage === "" && (
+								<Skeleton className="w-full h-32" />
+							)}
+						</Card>
 
 						<Card className="flex flex-col space-y-1 grow">
-							<CardTitle className="p-0">
+							<CardTitle className="p-0 px-3">
 								Solutions Builder (solution_agent)
 							</CardTitle>
 
