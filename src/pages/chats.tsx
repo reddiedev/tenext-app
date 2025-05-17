@@ -35,6 +35,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 	}
 
 	let accessToken = session.user.accessToken;
+
 	if (!accessToken) {
 		const email = session.user.email;
 		const password = "password";
@@ -130,11 +131,13 @@ export default function ChatPage() {
 												<CardTitle className="text-lg">
 													{thread.title}
 												</CardTitle>
-												<CardDescription></CardDescription>
+												<CardDescription>
+													{thread.messages.length} messages
+												</CardDescription>
 											</div>
 											{thread.messages.length > 0 &&
 												thread.messages[thread.messages.length - 1]?.role ===
-													"user" && (
+													"customer" && (
 													<Badge variant="destructive" className="ml-auto">
 														{thread.messages.length} new
 													</Badge>

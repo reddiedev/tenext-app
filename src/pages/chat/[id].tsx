@@ -1,22 +1,22 @@
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { ChatBox } from "~/components/chat/ChatBox";
 
-import axios, { type AxiosResponse } from "axios";
+import axios from "axios";
 import { StepBackIcon } from "lucide-react";
 import type { GetServerSideProps } from "next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import KnowledgeBaseWidget from "~/components/chat/KnowledgeBaseWidget";
+import SiteFooter from "~/components/site-footer";
 import AppHeader from "~/components/site-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { env } from "~/env";
 import { auth } from "~/server/auth";
-import type { UIMessage, UIThread } from "~/types/chat";
-import { api } from "~/utils/api";
-import SiteFooter from "~/components/site-footer";
 import { db } from "~/server/db";
+import type { UIMessage } from "~/types/chat";
+import { api } from "~/utils/api";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await auth(context);
@@ -67,8 +67,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 export default function Page({ threadId }: { threadId: string }) {
 	const { data: session } = useSession();
+
 	const [messages, setMessages] = useState<UIMessage[]>([]);
+
 	const [streamingMessage, setStreamingMessage] = useState<string>("");
+	const [rateAgentMessage, setRateAgentMessage] = useState<string>("");
+	const [suggestAgentMessage, setSuggestAgentMessage] = useState<string>("");
+	const [solutionAgentMessage, setSolutionAgentMessage] = useState<string>("");
 
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -249,11 +254,11 @@ export default function Page({ threadId }: { threadId: string }) {
 						<div className="grid grid-cols-2 gap-2">
 							<div className="flex flex-col space-y-1">
 								<CardTitle className="p-0">Summary</CardTitle>
-								<Skeleton className="w-full h-32" />
+								<Skeleton className="w-full min-h-32 h-full" />
 							</div>
 							<div className="flex flex-col space-y-1">
 								<CardTitle className="p-0">Knowledge Base</CardTitle>
-								<Skeleton className="w-full h-32" />
+								<KnowledgeBaseWidget />
 							</div>
 						</div>
 
