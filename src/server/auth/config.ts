@@ -45,7 +45,6 @@ export const authConfig = {
 			},
 			async authorize(credentials, req) {
 				// Add logic here to look up the user from the credentials supplied
-
 				const email = credentials.email as string;
 
 				let name = "User";

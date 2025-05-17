@@ -24,10 +24,10 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { toast } from "sonner";
-import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { Separator } from "~/components/ui/separator";
+
 // Define the form validation schema for signin
 const formSchema = z.object({
 	email: z.string().email({
@@ -77,6 +77,8 @@ export function SigninForm() {
 			return;
 		}
 
+		console.log(result);
+
 		toast.success("Signed in successfully");
 		setIsSuccess(true);
 		setIsSubmitting(false);
@@ -85,6 +87,7 @@ export function SigninForm() {
 
 		// Optionally, redirect after sign in
 		setTimeout(() => {
+			toast.dismiss();
 			router.push("/dashboard");
 		}, 2 * 1000);
 	}

@@ -19,6 +19,13 @@ const config = {
 	},
 
 	transpilePackages: ["next-auth"],
+	images: {
+		remotePatterns: [
+			{
+				hostname: "plus.unsplash.com",
+			},
+		],
+	},
 };
 
 export default config;

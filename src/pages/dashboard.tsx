@@ -8,6 +8,7 @@ import {
 
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
+import { useSession } from "next-auth/react";
 
 const features = [
 	{ id: 1, name: "24/7 AI-powered support" },
@@ -131,6 +132,10 @@ export function HeroSection() {
 }
 
 export default function Page() {
+	const { data: session } = useSession();
+
+	console.log(session);
+
 	return (
 		<main>
 			<HeroSection />
