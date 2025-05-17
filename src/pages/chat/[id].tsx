@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { ChatSidebar } from "~/components/chat/ChatSidebar";
-import { ChatBox } from "~/components/chat/ChatBox";
 import { useRouter } from "next/router";
+import { useState } from "react";
+import { ChatBox } from "~/components/chat/ChatBox";
 
-import type { GetServerSideProps, NextPage } from "next";
 import axios, { type AxiosResponse } from "axios";
+import type { GetServerSideProps } from "next";
+import { useSession } from "next-auth/react";
 import { env } from "~/env";
 import { auth } from "~/server/auth";
 import { api } from "~/utils/api";
-import { useSession } from "next-auth/react";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await auth(context);
@@ -154,15 +153,18 @@ export default function Page({ id }: { id: string }) {
 
 	const activeThread = threads.find((thread) => thread.id === activeThreadId);
 
-	const handleSendMessage = (newMessage: string) => {
-		const updatedThreads = threads.map((thread) => {
+	const getChatCompletion = api.agent.getChatCompletion.useMutation();
+
+	const handleSendMessage = async (newMessage: string) => {
+		const currentCount = threads.length;
+		const prevUpdatedThreads = threads.map((thread) => {
 			if (thread.id === activeThreadId) {
 				return {
 					...thread,
 					messages: [
 						...thread.messages,
 						{
-							id: thread.messages.length + 1,
+							id: currentCount + 1,
 							sender: "You",
 							content: newMessage,
 							timestamp: "Just now",
@@ -170,6 +172,42 @@ export default function Page({ id }: { id: string }) {
 						},
 					],
 					lastMessage: newMessage,
+				};
+			}
+			return thread;
+		});
+
+		setThreads(prevUpdatedThreads);
+
+		const response = await getChatCompletion.mutateAsync({
+			message: newMessage,
+			sessionId: `thread-${id}`,
+		});
+
+		const responseMessage = response.message.content;
+
+		const updatedThreads = threads.map((thread) => {
+			if (thread.id === activeThreadId) {
+				return {
+					...thread,
+					messages: [
+						...thread.messages,
+						{
+							id: currentCount + 1,
+							sender: "You",
+							content: newMessage,
+							timestamp: "Just now",
+							isCurrentUser: true,
+						},
+						{
+							id: currentCount + 2,
+							sender: "Agent",
+							content: responseMessage,
+							timestamp: "Just now",
+							isCurrentUser: false,
+						},
+					],
+					lastMessage: responseMessage,
 				};
 			}
 			return thread;
