@@ -223,7 +223,7 @@ export default function Page({ threadId }: { threadId: string }) {
 				)}
 				{session?.user.role !== "user" && (
 					<Card className="w-full h-full p-4 gap-2">
-						<CardTitle className="p-0">Assistant</CardTitle>
+						<CardTitle className="p-0">Summary</CardTitle>
 						<Skeleton className="w-full h-32" />
 
 						<CardTitle className="p-0">Knowledge Base</CardTitle>

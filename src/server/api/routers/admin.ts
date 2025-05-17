@@ -26,4 +26,13 @@ export const adminRouter = createTRPCRouter({
 		});
 		return users;
 	}),
+
+	getUserThreads: protectedProcedure.query(async ({ ctx }) => {
+		const threads = await ctx.db.thread.findMany({
+			where: { userId: ctx.session.user.id },
+			orderBy: { createdAt: "desc" },
+			include: { user: true },
+		});
+		return threads;
+	}),
 });

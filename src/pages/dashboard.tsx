@@ -63,6 +63,7 @@ import SystemPromptEditor from "~/components/system-prompt-editor";
 import { api } from "~/utils/api";
 import StaffUsersTable from "~/components/staff-users-table";
 import AdminUsersTable from "~/components/admin-users-table";
+import ThreadsTable from "~/components/threads-table";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await auth(context);
@@ -697,6 +698,7 @@ export default function Page() {
 
 	const { data: staff } = api.admin.getStaffUsers.useQuery();
 	const { data: admin } = api.admin.getAdminUsers.useQuery();
+	const { data: threads } = api.admin.getUserThreads.useQuery();
 
 	return (
 		<div className="flex min-h-screen flex-col">
@@ -814,11 +816,15 @@ export default function Page() {
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
-								<div className="h-[400px] flex items-center justify-center border rounded-md">
-									<p className="text-muted-foreground">
-										Chats management coming soon
-									</p>
-								</div>
+								{threads ? (
+									<ThreadsTable threads={threads} />
+								) : (
+									<div className="h-[400px] flex items-center justify-center border rounded-md">
+										<p className="text-muted-foreground">
+											Loading conversation threads...
+										</p>
+									</div>
+								)}
 							</CardContent>
 						</Card>
 					</TabsContent>
