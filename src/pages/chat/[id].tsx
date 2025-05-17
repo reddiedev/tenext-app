@@ -115,7 +115,7 @@ export default function Page({ threadId }: { threadId: string }) {
 	}, [messages]);
 
 	async function getAIStreamingResponse(newMessage: string, role: string) {
-		console.log(`getAIStreamingResponse: ${newMessage}`);
+		console.log(`getAIStreamingResponse: ${newMessage} from ${role}`);
 		setIsLoading(true);
 
 		try {
@@ -125,7 +125,7 @@ export default function Page({ threadId }: { threadId: string }) {
 
 			// Create streaming request
 			const response = await fetch(
-				`${env.NEXT_PUBLIC_BACKEND_URL}/agent/v1/chat_stream`,
+				`http://5.223.54.94:8000/agent/v1/chat_stream`,
 				{
 					method: "POST",
 					headers: {
