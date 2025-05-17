@@ -179,7 +179,7 @@ export function SigninForm() {
 					<Button
 						onClick={async () => {
 							await signIn("google", {
-								callbackUrl: "/chats",
+								callbackUrl: "https://path.reddie.dev/chats",
 							});
 						}}
 						variant="outline"

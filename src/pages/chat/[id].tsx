@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChatBox } from "~/components/chat/ChatBox";
 import axios from "axios";
-import { EditIcon, StepBackIcon } from "lucide-react";
+import { EditIcon, LayoutDashboardIcon, StepBackIcon } from "lucide-react";
 import type { GetServerSideProps } from "next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -245,25 +245,11 @@ export default function Page({ threadId }: { threadId: string }) {
 			<AppHeader />
 			<div className="flex items-center justify-end px-5 pt-2 space-x-2">
 				{session?.user.role !== "user" && (
-					<Button
-						onClick={async () => {
-							toast.promise(
-								async () => {
-									await manualInterventionMutation.mutateAsync({
-										threadId,
-									});
-								},
-								{
-									loading: "Intervening with thread...",
-									success: "Thread intervened with successfully",
-									error: "Failed to intervene with thread",
-								},
-							);
-						}}
-						className="py-2 h-auto"
-					>
-						<EditIcon className="size-4 mr-2" />
-						Intervene Manually
+					<Button asChild className="py-2 h-auto">
+						<Link href="/dashboard">
+							<LayoutDashboardIcon className="size-4 mr-2" />
+							Back to Dashboard
+						</Link>
 					</Button>
 				)}
 				<Button asChild className="py-2 h-auto">
