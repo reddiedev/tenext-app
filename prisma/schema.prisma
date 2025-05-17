@@ -26,7 +26,6 @@ model Post {
     @@index([name])
 }
 
-// Necessary for Next auth
 model Account {
     id                       String  @id @default(cuid())
     userId                   String
@@ -60,11 +59,18 @@ model User {
     email         String?   @unique
     emailVerified DateTime?
     image         String?
+
+    role UserRole @default(user)
+    accessToken String?
+
     accounts      Account[]
     sessions      Session[]
     posts         Post[]
+    threads       Thread[]
+    
 
-    role UserRole @default(user)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt @default(now())   
 }
 
 enum UserRole {
@@ -79,4 +85,14 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model Thread {
+    cuid        String   @id @default(cuid())
+
+    user User @relation(fields: [userId], references: [id])
+    userId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt @default(now())   
 }

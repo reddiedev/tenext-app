@@ -59,6 +59,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { cn } from "~/lib/utils";
 import { auth } from "~/server/auth";
 import SiteFooter from "~/components/site-footer";
+import SystemPromptEditor from "~/components/system-prompt-editor";
+import { api } from "~/utils/api";
+import StaffUsersTable from "~/components/staff-users-table";
+import AdminUsersTable from "~/components/admin-users-table";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await auth(context);
@@ -72,6 +76,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		};
 	}
 
+	if (session.user.role !== "admin") {
+		return {
+			redirect: {
+				destination: "/chats",
+				permanent: false,
+			},
+		};
+	}
 	return {
 		props: { session },
 	};
@@ -682,7 +694,10 @@ function TableSkeleton() {
 // Main Dashboard Page Component
 export default function Page() {
 	const { data: session } = useSession();
-	console.log(session);
+
+	const { data: staff } = api.admin.getStaffUsers.useQuery();
+	const { data: admin } = api.admin.getAdminUsers.useQuery();
+
 	return (
 		<div className="flex min-h-screen flex-col">
 			<AppHeader />
@@ -816,10 +831,59 @@ export default function Page() {
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
-								<div className="h-[400px] flex items-center justify-center border rounded-md">
-									<p className="text-muted-foreground">
-										Agent management coming soon
-									</p>
+								<Card>
+									<CardHeader>
+										<CardTitle>Staff Users</CardTitle>
+										<CardDescription>
+											Manage staff users and their access levels
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										{staff ? (
+											<StaffUsersTable staffUsers={staff} />
+										) : (
+											<div className="flex justify-center items-center h-32 border rounded-md">
+												<p className="text-muted-foreground">
+													Loading staff users...
+												</p>
+											</div>
+										)}
+									</CardContent>
+								</Card>
+
+								<Card className="mt-6">
+									<CardHeader>
+										<CardTitle>Admin Users</CardTitle>
+										<CardDescription>
+											System administrators with full access
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										{admin ? (
+											<AdminUsersTable adminUsers={admin} />
+										) : (
+											<div className="flex justify-center items-center h-32 border rounded-md">
+												<p className="text-muted-foreground">
+													Loading admin users...
+												</p>
+											</div>
+										)}
+									</CardContent>
+								</Card>
+							</CardContent>
+						</Card>
+					</TabsContent>
+					<TabsContent value="system" className="space-y-4">
+						<Card>
+							<CardHeader>
+								<CardTitle>System</CardTitle>
+								<CardDescription>
+									Manage and view system settings
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<div className="grid gap-8 md:grid-cols-1 lg:grid-cols-1">
+									<SystemPromptEditor />
 								</div>
 							</CardContent>
 						</Card>

@@ -139,7 +139,7 @@ export default function Page() {
 	return (
 		<main>
 			<HeroSection />
-			<SiteFooter />
+			<SiteFooter className="px-24" />
 		</main>
 	);
 }

@@ -54,14 +54,16 @@ export function ChatBox({
 	}
 
 	return (
-		<Card className={cn("flex w-full flex-col space-y-0 gap-0 p-4", className)}>
+		<Card
+			className={cn("flex w-full flex-col space-y-0 gap-0 p-4 ", className)}
+		>
 			{/* Chat header */}
 			<CardHeader className="p-0">
 				<CardTitle className=" p-0">{activeThread.title}</CardTitle>
 			</CardHeader>
 
 			{/* Messages */}
-			<ScrollArea className="flex-1 p-4 max-h-[35rem]">
+			<ScrollArea className="flex-1 p-4 max-h-[35rem] min-h-[35rem]">
 				<div className="flex flex-col gap-3">
 					{messages.map((message) => (
 						<MessageBox key={message.id} message={message} />

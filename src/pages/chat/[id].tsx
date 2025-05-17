@@ -16,6 +16,7 @@ import { auth } from "~/server/auth";
 import type { UIMessage, UIThread } from "~/types/chat";
 import { api } from "~/utils/api";
 import SiteFooter from "~/components/site-footer";
+import { db } from "~/server/db";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await auth(context);
@@ -26,20 +27,19 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		};
 	}
 
-	const email = session.user.email;
-	const password = "password";
-
-	let accessToken = context.req.cookies.access_token;
-
+	let accessToken = session.user.accessToken;
 	if (!accessToken) {
-		const registerResponse = await axios
+		const email = session.user.email;
+		const password = "password";
+
+		await axios
 			.post(env.NEXT_PUBLIC_BACKEND_URL + "/auth/register", {
 				email,
 				password,
 			})
 			.catch(console.error);
 
-		const loginResponse: AxiosResponse<{ message: string }> = await axios.post(
+		const loginResponse = await axios.post(
 			env.NEXT_PUBLIC_BACKEND_URL + "/auth/login",
 			{
 				email,
@@ -48,11 +48,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		);
 
 		accessToken = loginResponse.data.message;
-	}
 
-	context.res.setHeader("Set-Cookie", [
-		`access_token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=3600`,
-	]);
+		if (accessToken) {
+			await db.user.update({
+				where: { id: session.user.id },
+				data: { accessToken },
+			});
+		}
+	}
 
 	// Extract the id parameter from the URL
 	const { id } = context.params!;
@@ -102,41 +105,8 @@ export default function Page({ threadId }: { threadId: string }) {
 		setStreamingMessage("");
 
 		try {
-			if (!session) {
+			if (!session || !session.user.accessToken) {
 				return;
-			}
-
-			let accessToken = document.cookie
-				.split("; ")
-				.find((row) => row.startsWith("access_token="))
-				?.split("=")[1];
-
-			if (!accessToken) {
-				const loginResponse = await fetch(
-					`${env.NEXT_PUBLIC_BACKEND_URL}/auth/login`,
-					{
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({
-							email: session?.user.email,
-							password: "password",
-						}),
-					},
-				);
-
-				if (!loginResponse.ok) {
-					console.error("Login failed:", await loginResponse.text());
-					throw new Error("Login failed");
-				}
-
-				const loginData = await loginResponse.json();
-				accessToken = loginData.message;
-			}
-
-			if (!accessToken) {
-				throw new Error("No access token found");
 			}
 
 			// Create streaming request
@@ -146,7 +116,7 @@ export default function Page({ threadId }: { threadId: string }) {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
-						Authorization: `Bearer ${accessToken}`,
+						Authorization: `Bearer ${session.user.accessToken}`,
 					},
 					body: JSON.stringify({
 						message: newMessage,
@@ -251,19 +221,21 @@ export default function Page({ threadId }: { threadId: string }) {
 						<Skeleton className="w-full h-full" />
 					</Card>
 				)}
-				<Card className="w-full h-full p-4 gap-2">
-					<CardTitle className="p-0">Assistant</CardTitle>
-					<Skeleton className="w-full h-32" />
+				{session?.user.role !== "user" && (
+					<Card className="w-full h-full p-4 gap-2">
+						<CardTitle className="p-0">Assistant</CardTitle>
+						<Skeleton className="w-full h-32" />
 
-					<CardTitle className="p-0">Knowledge Base</CardTitle>
-					<Skeleton className="w-full h-32" />
+						<CardTitle className="p-0">Knowledge Base</CardTitle>
+						<Skeleton className="w-full h-32" />
 
-					<CardTitle className="p-0">Notes</CardTitle>
-					<Skeleton className="w-full h-32" />
+						<CardTitle className="p-0">Notes</CardTitle>
+						<Skeleton className="w-full h-32" />
 
-					<CardTitle className="p-0">Tools</CardTitle>
-					<Skeleton className="w-full min-h-32 grow" />
-				</Card>
+						<CardTitle className="p-0">Tools</CardTitle>
+						<Skeleton className="w-full min-h-32 grow" />
+					</Card>
+				)}
 			</div>
 			<SiteFooter />
 		</div>

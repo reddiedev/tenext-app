@@ -4,13 +4,14 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import Image from "next/image";
 import { SITE_TITLE, SITE_DESCRIPTION } from "~/components/site-head";
+import { cn } from "~/lib/utils";
 
-export function SiteFooter() {
+export function SiteFooter({ className }: { className?: string }) {
 	const { data: session } = useSession();
 	const router = useRouter();
 	return (
 		<footer className="border-t py-8 bg-background mt-40">
-			<div className="container mx-auto px-4">
+			<div className={cn(" px-6", className)}>
 				<div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 					{/* Company Info */}
 					<div className="space-y-4">

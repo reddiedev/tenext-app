@@ -3,9 +3,10 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { MessageSquare, PlusCircle } from "lucide-react";
 import type { GetServerSideProps } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import SiteFooter from "~/components/site-footer";
+import AppHeader from "~/components/site-header";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -18,9 +19,8 @@ import {
 } from "~/components/ui/card";
 import { env } from "~/env";
 import { auth } from "~/server/auth";
+import { db } from "~/server/db";
 import { api } from "~/utils/api";
-import AppHeader from "~/components/site-header";
-import SiteFooter from "~/components/site-footer";
 
 // Initialize dayjs plugins
 dayjs.extend(relativeTime);
@@ -34,13 +34,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		};
 	}
 
-	const email = session.user.email;
-	const password = "password";
-
-	let accessToken = context.req.cookies.access_token;
-
+	let accessToken = session.user.accessToken;
 	if (!accessToken) {
-		const registerResponse = await axios
+		const email = session.user.email;
+		const password = "password";
+
+		await axios
 			.post(env.NEXT_PUBLIC_BACKEND_URL + "/auth/register", {
 				email,
 				password,
@@ -56,11 +55,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		);
 
 		accessToken = loginResponse.data.message;
-	}
 
-	context.res.setHeader("Set-Cookie", [
-		`access_token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=3600`,
-	]);
+		if (accessToken) {
+			await db.user.update({
+				where: { id: session.user.id },
+				data: { accessToken },
+			});
+		}
+	}
 
 	return {
 		props: {},

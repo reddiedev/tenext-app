@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { UserRole } from "@prisma/client";
 
 import { db } from "~/server/db";
+import axios from "axios";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -16,6 +17,7 @@ declare module "next-auth" {
 		user: {
 			id: string;
 			role: UserRole;
+			accessToken?: string;
 			// ...other properties
 			// role: UserRole;
 		} & DefaultSession["user"];
@@ -47,11 +49,13 @@ export const authConfig = {
 					...session.user,
 					id: user.id,
 					role: session.user.role,
+					accessToken: session.user.accessToken,
 				},
 			};
 		},
 		signIn: ({ user }) => {
 			console.log("signIn:", user);
+
 			return true;
 		},
 	},

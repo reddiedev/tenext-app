@@ -16,7 +16,7 @@ export const agentRouter = createTRPCRouter({
 	// /chats page -> get the user's recent threads/sessions
 
 	getRecentThreads: protectedProcedure.query(async ({ ctx }) => {
-		const accessToken = ctx.cookies.access_token;
+		const accessToken = ctx.session.user.accessToken;
 
 		if (!accessToken) {
 			throw new TRPCError({
@@ -120,7 +120,7 @@ export const agentRouter = createTRPCRouter({
 	getThread: protectedProcedure
 		.input(z.object({ threadId: z.string() }))
 		.query(async ({ ctx, input }) => {
-			const accessToken = ctx.cookies.access_token;
+			const accessToken = ctx.session.user.accessToken;
 
 			if (!accessToken) {
 				throw new TRPCError({
@@ -143,7 +143,7 @@ export const agentRouter = createTRPCRouter({
 	// create new thread from /chats page
 
 	createNewThread: protectedProcedure.mutation(async ({ ctx }) => {
-		const accessToken = ctx.cookies.access_token;
+		const accessToken = ctx.session.user.accessToken;
 
 		if (!accessToken) {
 			throw new TRPCError({
@@ -152,24 +152,22 @@ export const agentRouter = createTRPCRouter({
 			});
 		}
 
-		// generate random uuid
-
-		const uuid = crypto.randomUUID();
-		const randomImage = Math.floor(Math.random() * 100);
-
 		const firstMessage = "Hello, how may I help you today?";
 
-		// create new sessionId in database
-		// TODO: create new thread in database
+		const newThread = await ctx.db.thread.create({
+			data: {
+				userId: ctx.session.user.id,
+			},
+		});
 
-		const newThread: UIThread = {
-			id: uuid,
+		const newUIThread: UIThread = {
+			id: newThread.cuid,
 			title: "New Chat",
 			userEmail: ctx.session.user.email!,
 			messages: [
 				{
 					id: 1,
-					sender: "You",
+					sender: "Path",
 					content: firstMessage,
 					timestamp: new Date().toISOString(),
 					isCurrentUser: true,
@@ -178,14 +176,14 @@ export const agentRouter = createTRPCRouter({
 			],
 		};
 
-		return newThread;
+		return newUIThread;
 	}),
 
 	// probably not needed anymore
 	getChatHistory: protectedProcedure
 		.input(z.object({ sessionId: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			const accessToken = ctx.cookies.access_token;
+			const accessToken = ctx.session.user.accessToken;
 
 			if (!accessToken) {
 				throw new TRPCError({
@@ -212,7 +210,7 @@ export const agentRouter = createTRPCRouter({
 	getChatCompletion: protectedProcedure
 		.input(z.object({ sessionId: z.string(), message: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			const accessToken = ctx.cookies.access_token;
+			const accessToken = ctx.session.user.accessToken;
 
 			if (!accessToken) {
 				throw new TRPCError({
