@@ -5,18 +5,29 @@
 		"clientKind": "git",
 		"useIgnoreFile": true
 	},
-	"files": { "ignoreUnknown": false, "ignore": [] },
-	"formatter": { "enabled": true },
-	"organizeImports": { "enabled": true },
+	"files": {
+		"ignoreUnknown": false,
+		"ignore": []
+	},
+	"formatter": {
+		"enabled": true
+	},
+	"organizeImports": {
+		"enabled": false
+	},
 	"linter": {
-		"enabled": true,
+		"enabled": false,
 		"rules": {
 			"nursery": {
 				"useSortedClasses": {
 					"level": "warn",
 					"fix": "safe",
 					"options": {
-						"functions": ["clsx", "cva", "cn"]
+						"functions": [
+							"clsx",
+							"cva",
+							"cn"
+						]
 					}
 				}
 			},

@@ -5,6 +5,7 @@ import {
 	CheckCircle2,
 	Sparkles,
 } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
@@ -42,16 +43,20 @@ export function HeroSection() {
 						</div>
 
 						<div className="flex flex-col gap-4 sm:flex-row">
-							<Button
-								size="lg"
-								className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
-							>
-								Start your free trial
-								<ArrowRight className="ml-2 h-4 w-4" />
-							</Button>
-							<Button size="lg" variant="outline">
-								Book a demo
-							</Button>
+							<Link href="/sign-in">
+								<Button
+									size="lg"
+									className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
+								>
+									Start your free trial
+									<ArrowRight className="ml-2 h-4 w-4" />
+								</Button>
+							</Link>
+							<Link href="/sign-in">
+								<Button size="lg" variant="outline">
+									Book a demo
+								</Button>
+							</Link>
 						</div>
 
 						<div className="flex flex-col items-start gap-4 pt-4 sm:flex-row sm:items-center">
