@@ -3,7 +3,13 @@ export type UIMessage = {
 	sender: string;
 	avatar?: string;
 	content: string;
-	role: "agent" | "user" | "assistant";
+	role:
+		| "csr"
+		| "customer"
+		| "assistant"
+		| "rate_agent"
+		| "solution_agent"
+		| "suggest_agent";
 	timestamp: string;
 	isCurrentUser: boolean;
 };

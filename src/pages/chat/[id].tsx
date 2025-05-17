@@ -82,7 +82,7 @@ export default function Page({ threadId }: { threadId: string }) {
 
 	console.log("messages:", messages);
 
-	const handleSendMessage = async (newMessage: string) => {
+	const handleSendMessageToCompletion = async (newMessage: string) => {
 		console.log("messages:", messages);
 		console.log("adding new message:", newMessage);
 		const currentCount = messages.length;
@@ -93,9 +93,10 @@ export default function Page({ threadId }: { threadId: string }) {
 				{
 					id: currentCount + 1,
 					sender: "user",
+					avatar: session?.user.image || "",
 					content: newMessage,
 					timestamp: new Date().toISOString(),
-					role: "user",
+					role: "customer",
 					isCurrentUser: true,
 				},
 			];
@@ -178,6 +179,7 @@ export default function Page({ threadId }: { threadId: string }) {
 							timestamp: new Date().toISOString(),
 							role: "assistant",
 							isCurrentUser: false,
+							avatar: "/logo-blue.png",
 						},
 					];
 				});
@@ -211,7 +213,7 @@ export default function Page({ threadId }: { threadId: string }) {
 					<ChatBox
 						activeThread={activeThread}
 						messages={messages}
-						onSendMessage={handleSendMessage}
+						onSendMessage={handleSendMessageToCompletion}
 						streamingMessage={streamingMessage}
 						isLoading={isLoading}
 					/>
