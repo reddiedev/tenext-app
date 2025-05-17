@@ -144,19 +144,21 @@ const initialThreads = [
 
 export default function Page({ id }: { id: string }) {
 	const router = useRouter();
-
 	const { data: session } = useSession();
-
 	const [threads, setThreads] = useState(initialThreads);
+	const [streamingMessage, setStreamingMessage] = useState<string>("");
+	const [isStreaming, setIsStreaming] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+
+	console.log("main page: streaming", isStreaming, streamingMessage);
 
 	const activeThreadId = parseInt(id);
-
 	const activeThread = threads.find((thread) => thread.id === activeThreadId);
-
-	const getChatCompletion = api.agent.getChatCompletion.useMutation();
 
 	const handleSendMessage = async (newMessage: string) => {
 		const currentCount = threads.length;
+
+		// Add user message immediately
 		const prevUpdatedThreads = threads.map((thread) => {
 			if (thread.id === activeThreadId) {
 				return {
@@ -178,42 +180,136 @@ export default function Page({ id }: { id: string }) {
 		});
 
 		setThreads(prevUpdatedThreads);
+		setIsStreaming(true);
+		setIsLoading(true);
+		setStreamingMessage("");
 
-		const response = await getChatCompletion.mutateAsync({
-			message: newMessage,
-			sessionId: `thread-${id}`,
-		});
-
-		const responseMessage = response.message.content;
-
-		const updatedThreads = threads.map((thread) => {
-			if (thread.id === activeThreadId) {
-				return {
-					...thread,
-					messages: [
-						...thread.messages,
-						{
-							id: currentCount + 1,
-							sender: "You",
-							content: newMessage,
-							timestamp: "Just now",
-							isCurrentUser: true,
-						},
-						{
-							id: currentCount + 2,
-							sender: "Agent",
-							content: responseMessage,
-							timestamp: "Just now",
-							isCurrentUser: false,
-						},
-					],
-					lastMessage: responseMessage,
-				};
+		try {
+			if (!session) {
+				return;
 			}
-			return thread;
-		});
 
-		setThreads(updatedThreads);
+			const loginResponse = await fetch(
+				`${env.NEXT_PUBLIC_BACKEND_URL}/auth/login`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						email: session?.user.email,
+						password: "password",
+					}),
+				},
+			);
+
+			if (!loginResponse.ok) {
+				console.error("Login failed:", await loginResponse.text());
+				throw new Error("Login failed");
+			}
+
+			const loginData = await loginResponse.json();
+			const accessToken = loginData.message;
+
+			if (!accessToken) {
+				throw new Error("No access token found");
+			}
+
+			// Create streaming request
+			const response = await fetch(
+				`${env.NEXT_PUBLIC_BACKEND_URL}/agent/v1/chat_stream`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${accessToken}`,
+					},
+					body: JSON.stringify({
+						message: newMessage,
+						session_id: `thread-${id}`,
+					}),
+				},
+			);
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const reader = response.body?.getReader();
+			const decoder = new TextDecoder();
+
+			if (!reader) {
+				throw new Error("No reader available");
+			}
+
+			// Track the complete message outside of React state
+			let completeMessage = "";
+
+			try {
+				while (true) {
+					const { done, value } = await reader.read();
+
+					if (done) {
+						break;
+					}
+
+					// Decode the stream chunk and split by newlines
+					const chunk = decoder.decode(value, { stream: true });
+					const lines = chunk.split("\n").filter((line) => line.trim());
+
+					// Process each line
+					for (const line of lines) {
+						try {
+							const data = JSON.parse(line);
+							completeMessage += data.content || "";
+							// Update UI with current progress
+							setStreamingMessage(completeMessage);
+							setIsLoading(false); // Hide loading state once we start receiving content
+						} catch (error) {
+							console.error("Error parsing stream data:", error);
+						}
+					}
+				}
+
+				// Ensure we have the final message before proceeding
+				console.log("Stream complete, final message:", completeMessage);
+
+				// Update threads with the complete message
+				setThreads((prevThreads) =>
+					prevThreads.map((thread) => {
+						if (thread.id === activeThreadId) {
+							return {
+								...thread,
+								messages: [
+									...thread.messages,
+									{
+										id: currentCount + 2,
+										sender: "Agent",
+										content: completeMessage,
+										timestamp: "Just now",
+										isCurrentUser: false,
+									},
+								],
+								lastMessage: completeMessage,
+							};
+						}
+						return thread;
+					}),
+				);
+			} catch (error) {
+				console.error("Error reading stream:", error);
+				throw error;
+			} finally {
+				reader.releaseLock();
+				setIsStreaming(false);
+				setIsLoading(false);
+				setStreamingMessage(""); // Clear the streaming message
+			}
+		} catch (error) {
+			console.error("Error in streaming:", error);
+			setIsStreaming(false);
+			setIsLoading(false);
+		}
 	};
 
 	return (
@@ -223,10 +319,12 @@ export default function Page({ id }: { id: string }) {
 				activeThreadId={activeThreadId}
 				onThreadSelect={handleThreadSelect}
 			/> */}
-			<div className="grid grid-cols-2 gap-2 p-2 w-full h-full grow">
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 w-full h-full grow">
 				<ChatBox
 					activeThread={activeThread}
 					onSendMessage={handleSendMessage}
+					streamingMessage={streamingMessage}
+					isLoading={isLoading}
 				/>
 			</div>
 		</div>

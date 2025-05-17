@@ -1,21 +1,27 @@
 import React, { useState } from "react";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import type { Thread } from "~/types/chat";
+import { MessageBox } from "./MessageBox";
+import { LoadingMessage } from "./LoadingMessage";
+import { StreamingMessage } from "./StreamingMessage";
 
 interface ChatBoxProps {
 	activeThread: Thread | undefined;
 	onSendMessage: (message: string) => void;
+	streamingMessage?: string;
+	isLoading?: boolean;
 	className?: string;
 }
 
 export function ChatBox({
 	activeThread,
 	onSendMessage,
+	streamingMessage,
+	isLoading,
 	className,
 }: ChatBoxProps) {
 	const [newMessage, setNewMessage] = useState("");
@@ -25,6 +31,8 @@ export function ChatBox({
 		onSendMessage(newMessage);
 		setNewMessage("");
 	};
+
+	// console.log("chatbox streamingMessage", streamingMessage);
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {
@@ -67,44 +75,14 @@ export function ChatBox({
 			<ScrollArea className="flex-1 p-4">
 				<div className="flex flex-col gap-3">
 					{activeThread.messages.map((message) => (
-						<div
-							key={message.id}
-							className={cn(
-								"flex gap-2",
-								message.isCurrentUser && "justify-end",
-							)}
-						>
-							{!message.isCurrentUser && (
-								<Avatar className="h-8 w-8">
-									<AvatarImage src={message.avatar} alt={message.sender} />
-									<AvatarFallback>
-										{message.sender
-											.split(" ")
-											.map((n: string) => n[0])
-											.join("")}
-									</AvatarFallback>
-								</Avatar>
-							)}
-							<div className="flex flex-col">
-								<Card
-									className={cn(
-										"max-w-3xl",
-										message.isCurrentUser
-											? "bg-primary text-primary-foreground"
-											: "bg-muted",
-										"py-0",
-									)}
-								>
-									<CardContent className="px-3 py-2">
-										<p>{message.content}</p>
-									</CardContent>
-								</Card>
-								<span className="mt-1 text-xs text-muted-foreground">
-									{message.timestamp}
-								</span>
-							</div>
-						</div>
+						<MessageBox key={message.id} message={message} />
 					))}
+
+					{/* Loading state */}
+					{isLoading && !streamingMessage && <LoadingMessage />}
+
+					{/* Streaming message */}
+					{streamingMessage && <StreamingMessage content={streamingMessage} />}
 				</div>
 			</ScrollArea>
 
