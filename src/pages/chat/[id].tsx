@@ -105,6 +105,8 @@ export default function Page({ threadId }: { threadId: string }) {
 		if (messages.length > 0) {
 			const lastMessage = messages[messages.length - 1];
 
+			if (session?.user.role == "user") return;
+
 			if (lastMessage && !processedMessages.includes(lastMessage.id)) {
 				getAIStreamingResponse(lastMessage.content, lastMessage.role);
 				setProcessedMessages((prev) => [...prev, lastMessage.id]);
