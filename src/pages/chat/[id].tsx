@@ -74,33 +74,56 @@ export default function Page({ threadId }: { threadId: string }) {
 
 	const { data: activeThread } = api.agent.getThread.useQuery({ threadId });
 
+	const { data: activeMessages } = api.agent.getThreadMessages.useQuery(
+		{
+			threadId,
+		},
+		{
+			enabled: activeThread?.isManualIntervention,
+			refetchInterval: 1000,
+			refetchIntervalInBackground: true,
+			refetchOnWindowFocus: true,
+		},
+	);
+
+	useEffect(() => {
+		// TODO fix the transition
+		if (activeMessages) {
+			setMessages([...activeMessages]);
+		}
+	}, [activeMessages]);
+
 	useEffect(() => {
 		if (activeThread) {
 			setMessages([...activeThread.messages]);
 		}
 	}, [activeThread]);
 
-	console.log("messages:", messages);
-
 	const handleSendMessageToCompletion = async (newMessage: string) => {
-		console.log("messages:", messages);
-		console.log("adding new message:", newMessage);
 		const currentCount = messages.length;
+
+		const senderRole = session?.user.role == "user" ? "customer" : "csr";
 
 		setMessages((prevMessages) => {
 			return [
 				...prevMessages,
 				{
 					id: currentCount + 1,
-					sender: "user",
+					sender: session?.user.name || "You",
 					avatar: session?.user.image || "",
 					content: newMessage,
 					timestamp: new Date().toISOString(),
-					role: "customer",
+					role: senderRole,
 					isCurrentUser: true,
 				},
 			];
 		});
+
+		// call endpoint for creating message
+
+		if (senderRole == "csr") {
+			return;
+		}
 
 		setIsLoading(true);
 		setStreamingMessage("");
@@ -166,8 +189,6 @@ export default function Page({ threadId }: { threadId: string }) {
 					}
 				}
 
-				// Ensure we have the final message before proceeding
-				console.log("Stream complete, final message:", completeMessage);
 				// Update threads with the complete message
 				setMessages((prevMessages) => {
 					return [
@@ -225,17 +246,38 @@ export default function Page({ threadId }: { threadId: string }) {
 				)}
 				{session?.user.role !== "user" && (
 					<Card className="w-full h-full p-4 gap-2">
-						<CardTitle className="p-0">Summary</CardTitle>
-						<Skeleton className="w-full h-32" />
+						<div className="grid grid-cols-2 gap-2">
+							<div className="flex flex-col space-y-1">
+								<CardTitle className="p-0">Summary</CardTitle>
+								<Skeleton className="w-full h-32" />
+							</div>
+							<div className="flex flex-col space-y-1">
+								<CardTitle className="p-0">Knowledge Base</CardTitle>
+								<Skeleton className="w-full h-32" />
+							</div>
+						</div>
 
-						<CardTitle className="p-0">Knowledge Base</CardTitle>
-						<Skeleton className="w-full h-32" />
-
-						<CardTitle className="p-0">Notes</CardTitle>
-						<Skeleton className="w-full h-32" />
-
-						<CardTitle className="p-0">Tools</CardTitle>
-						<Skeleton className="w-full min-h-32 grow" />
+						<CardTitle className="p-0 pt-5">Tools</CardTitle>
+						<div className="grid grid-cols-2 gap-2">
+							<div className="flex flex-col space-y-1">
+								<CardTitle className="p-0">
+									Support Quality (rate_agent)
+								</CardTitle>
+								<Skeleton className="w-full h-32" />
+							</div>
+							<div className="flex flex-col space-y-1">
+								<CardTitle className="p-0">
+									Empathy Score (suggest_agent )
+								</CardTitle>
+								<Skeleton className="w-full h-32" />
+							</div>
+						</div>
+						<div className="flex flex-col space-y-1">
+							<CardTitle className="p-0">
+								Solutions Builder (solution_agent)
+							</CardTitle>
+							<Skeleton className="w-full h-32" />
+						</div>
 					</Card>
 				)}
 			</div>

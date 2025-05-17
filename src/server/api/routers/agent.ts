@@ -8,6 +8,7 @@ import { TRPCError } from "@trpc/server";
 import type {
 	ChatCompletionResponse,
 	ChatHistoryResponse,
+	UIMessage,
 	UIThread,
 } from "~/types/chat";
 
@@ -46,10 +47,12 @@ export const agentRouter = createTRPCRouter({
 				});
 			}
 
+			// TODO: get the thread from the database
 			const thread: UIThread = {
 				id: input.threadId,
 				title: "New Chat",
 				userEmail: ctx.session.user.email!,
+				isManualIntervention: false,
 				messages: [
 					{
 						id: 1,
@@ -64,6 +67,26 @@ export const agentRouter = createTRPCRouter({
 			};
 
 			return thread;
+		}),
+
+	// USER/STAFF VIEW
+	// WHEN THREAD IS MANUAL INTERVENTION, GET THE MESSAGES FROM STAFF/USER
+	getThreadMessages: protectedProcedure
+		.input(z.object({ threadId: z.string() }))
+		.query(async ({ ctx, input }) => {
+			const accessToken = ctx.session.user.accessToken;
+
+			if (!accessToken) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "No access token",
+				});
+			}
+
+			// TODO
+			const messages: UIMessage[] = [];
+
+			return messages;
 		}),
 
 	// USER VIEW
@@ -89,6 +112,7 @@ export const agentRouter = createTRPCRouter({
 			id: newThread.cuid,
 			title: "New Chat",
 			userEmail: ctx.session.user.email!,
+			isManualIntervention: false,
 			messages: [
 				{
 					id: 1,

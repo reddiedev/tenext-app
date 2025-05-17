@@ -17,6 +17,7 @@ export type UIMessage = {
 export type UIThread = {
 	id: string;
 	title: string;
+	isManualIntervention: boolean;
 	userEmail: string;
 	messages: UIMessage[];
 };
