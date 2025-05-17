@@ -7,10 +7,11 @@ import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
 import type {
 	ChatCompletionResponse,
-	ChatHistoryResponse,
+	ChatHistoryMessage,
 	UIMessage,
 	UIThread,
 } from "~/types/chat";
+import dayjs from "dayjs";
 
 export const agentRouter = createTRPCRouter({
 	// CUSTOMER VIEW:
@@ -51,7 +52,45 @@ export const agentRouter = createTRPCRouter({
 				where: {
 					cuid: input.threadId,
 				},
+				include: {
+					messages: {
+						include: { user: true },
+					},
+				},
 			});
+
+			const historyResponse: AxiosResponse<{ history: ChatHistoryMessage[] }> =
+				await axios.get(
+					env.NEXT_PUBLIC_BACKEND_URL + "/conversation/get_history",
+					{
+						params: {
+							session_id: input.threadId,
+						},
+						headers: { Authorization: `Bearer ${accessToken}` },
+					},
+				);
+
+			const formattedMessages = [];
+
+			for (const msg of historyResponse.data.history) {
+				const msgData = thread?.messages.find((m) => m.id == msg.id);
+
+				if (!msgData) {
+					continue;
+				}
+
+				const formattedMessage: UIMessage = {
+					id: msg.id,
+					sender: msgData.user.name ?? "",
+					senderEmail: msgData.user.email ?? "",
+					content: msg.message,
+					timestamp: dayjs(msg.created_at).toISOString(),
+					role: msg.role as UIMessage["role"],
+					isCurrentUser: msgData.user.id == ctx.session.user.id,
+				};
+
+				formattedMessages.push(formattedMessage);
+			}
 
 			// TODO: get the thread from the database
 			const UIThread: UIThread = {
@@ -59,17 +98,7 @@ export const agentRouter = createTRPCRouter({
 				title: thread?.title ?? "New Chat",
 				userEmail: ctx.session.user.email!,
 				isManualIntervention: thread?.isManualIntevention ?? false,
-				messages: [
-					{
-						id: 1,
-						sender: "Path",
-						content: "Hello, how may I help you today?",
-						avatar: "/logo-blue.png",
-						timestamp: new Date().toISOString(),
-						isCurrentUser: false,
-						role: "assistant",
-					},
-				],
+				messages: [...formattedMessages],
 			};
 
 			return UIThread;
@@ -153,25 +182,21 @@ export const agentRouter = createTRPCRouter({
 			title: "New Chat",
 			userEmail: ctx.session.user.email!,
 			isManualIntervention: false,
-			messages: [
-				{
-					id: 1,
-					sender: "Path",
-					content: "Hello, how may I help you today?",
-					avatar: "/logo-blue.png",
-					timestamp: new Date().toISOString(),
-					isCurrentUser: false,
-					role: "assistant",
-				},
-			],
+
+			messages: [],
 		};
 
 		return newUIThread;
 	}),
 
-	// probably not needed anymore
-	getChatHistory: protectedProcedure
-		.input(z.object({ sessionId: z.string() }))
+	saveThreadMessage: protectedProcedure
+		.input(
+			z.object({
+				sessionId: z.string(),
+				message: z.string(),
+				role: z.string(),
+			}),
+		)
 		.mutation(async ({ ctx, input }) => {
 			const accessToken = ctx.session.user.accessToken;
 
@@ -182,18 +207,30 @@ export const agentRouter = createTRPCRouter({
 				});
 			}
 
-			const chatHistoryResponse: AxiosResponse<ChatHistoryResponse> =
+			const saveMessageResponse: AxiosResponse<{ message_id: number }> =
 				await axios.post(
-					env.NEXT_PUBLIC_BACKEND_URL + "/agent/v1/chat_history",
+					env.NEXT_PUBLIC_BACKEND_URL + "/conversation/send_message",
 					{
 						session_id: input.sessionId,
+						role: input.role,
+						message: input.message,
 					},
 					{
 						headers: { Authorization: `Bearer ${accessToken}` },
 					},
 				);
 
-			return chatHistoryResponse.data;
+			await ctx.db.message.create({
+				data: {
+					userId: ctx.session.user.id,
+					threadId: input.sessionId,
+					content: input.message,
+					role: input.role,
+					id: saveMessageResponse.data.message_id,
+				},
+			});
+
+			return { message: "ok!" };
 		}),
 
 	// probably not needed anymore

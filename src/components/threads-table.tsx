@@ -10,24 +10,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import Link from "next/link";
+import type { Message, Thread, User } from "@prisma/client";
 
-type User = {
-	id: string;
-	name: string | null;
-	email: string | null;
-	image: string | null;
+type ThreadRow = Thread & {
+	user?: User;
+	messages: Message[];
 };
 
-// Update this type to match the actual data structure
-type Thread = {
-	cuid: string;
-	userId: string;
-	createdAt: Date;
-	updatedAt: Date;
-	user?: User; // This might come from a join or separate query
-};
-
-export function ThreadsTable({ threads }: { threads: Thread[] }) {
+export function ThreadsTable({ threads }: { threads: ThreadRow[] }) {
 	if (!threads || threads.length === 0) {
 		return (
 			<div className="flex justify-center items-center h-32 border rounded-md">
@@ -38,7 +28,6 @@ export function ThreadsTable({ threads }: { threads: Thread[] }) {
 
 	// Generate dummy data for the demo
 	const getRandomInterventionScore = () => Math.floor(Math.random() * 100);
-	const getRandomMessageCount = () => Math.floor(Math.random() * 50) + 1;
 
 	// Get color based on intervention score
 	const getInterventionColor = (score: number) => {
@@ -63,6 +52,7 @@ export function ThreadsTable({ threads }: { threads: Thread[] }) {
 		<Table>
 			<TableHeader>
 				<TableRow>
+					<TableHead className="w-[250px]">ID</TableHead>
 					<TableHead className="w-[250px]">User</TableHead>
 					<TableHead className="w-[150px]">Messages</TableHead>
 					<TableHead className="w-[150px]">Intervention Score</TableHead>
@@ -74,10 +64,11 @@ export function ThreadsTable({ threads }: { threads: Thread[] }) {
 				{threads.map((thread) => {
 					// Generate demo data - in a real app, this would come from the API
 					const interventionScore = getRandomInterventionScore();
-					const messageCount = getRandomMessageCount();
+					const messageCount = thread.messages.length;
 
 					return (
 						<TableRow key={thread.cuid}>
+							<TableCell>{thread.cuid}</TableCell>
 							<TableCell>
 								<div className="flex items-center space-x-3">
 									<Avatar>

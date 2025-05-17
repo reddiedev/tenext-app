@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { MessageSquare, PlusCircle } from "lucide-react";
 import type { GetServerSideProps } from "next";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import SiteFooter from "~/components/site-footer";
@@ -71,17 +72,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 };
 
 export default function ChatPage() {
+	const { data: session } = useSession();
+	console.log("session: /chats =", session);
+
 	const router = useRouter();
 	const { data: threads, isLoading } = api.agent.getRecentThreads.useQuery();
-
-	const formatTimestamp = (timestamp: Date | undefined) => {
-		if (!timestamp) return "";
-		try {
-			return dayjs(timestamp).fromNow();
-		} catch (error) {
-			return timestamp;
-		}
-	};
 
 	const newChat = api.agent.createNewThread.useMutation();
 	const handleCreateNewChat = async () => {

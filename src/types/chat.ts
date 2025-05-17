@@ -1,15 +1,10 @@
 export type UIMessage = {
 	id: number;
 	sender: string;
+	senderEmail: string;
 	avatar?: string;
 	content: string;
-	role:
-		| "csr"
-		| "customer"
-		| "assistant"
-		| "rate_agent"
-		| "solution_agent"
-		| "suggest_agent";
+	role: "csr" | "customer";
 	timestamp: string;
 	isCurrentUser: boolean;
 };
@@ -22,9 +17,13 @@ export type UIThread = {
 	messages: UIMessage[];
 };
 
-export type ChatHistoryResponse = {
-	history: ChatMessage[];
+export type ChatHistoryMessage = {
+	id: number;
 	session_id: string;
+	role: string;
+	message: string;
+	created_at: string;
+	updated_at: string;
 };
 
 export type ChatMessage = {

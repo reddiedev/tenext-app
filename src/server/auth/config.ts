@@ -4,7 +4,6 @@ import GoogleProvider from "next-auth/providers/google";
 import { UserRole } from "@prisma/client";
 
 import { db } from "~/server/db";
-import axios from "axios";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -55,7 +54,7 @@ export const authConfig = {
 		},
 		signIn: async ({ user }) => {
 			console.log("signIn:", user);
-			await db.user.update({
+			await db.user.updateMany({
 				where: { id: user.id },
 				data: {
 					accessToken: null,

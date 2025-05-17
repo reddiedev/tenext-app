@@ -22,7 +22,6 @@ export function StreamingMessage({ content }: StreamingMessageProps) {
 						<MarkdownContent content={content} className="break-words" />
 					</CardContent>
 				</Card>
-				<span className="mt-1 text-xs text-muted-foreground">Typing...</span>
 			</div>
 		</div>
 	);

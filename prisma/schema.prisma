@@ -67,6 +67,8 @@ model User {
     sessions      Session[]
     posts         Post[]
     threads       Thread[]
+
+    messages Message[]
     
 
     createdAt DateTime @default(now())
@@ -90,12 +92,33 @@ model VerificationToken {
 model Thread {
     cuid        String   @id @default(cuid())
 
-    user User @relation(fields: [userId], references: [id])
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String
 
     title String?
     isManualIntevention Boolean @default(false)
 
+    messages Message[]
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt @default(now())   
+}
+
+model Message {
+    cuid String @id @default(cuid())
+
+    id Int 
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+
+    content String
+    role String
+
+    thread Thread @relation(fields: [threadId], references: [cuid], onDelete: Cascade)
+    threadId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt @default(now())
+    
 }

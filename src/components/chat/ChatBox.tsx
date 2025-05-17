@@ -1,19 +1,18 @@
 import React, { useState } from "react";
-import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import type { UIThread, UIMessage } from "~/types/chat";
-import { MessageBox } from "./MessageBox";
+import { cn } from "~/lib/utils";
+import type { UIMessage, UIThread } from "~/types/chat";
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { LoadingMessage } from "./LoadingMessage";
-import { StreamingMessage } from "./StreamingMessage";
-import { Card, CardTitle, CardHeader, CardDescription } from "../ui/card";
+import { MessageBox } from "./MessageBox";
 
 interface ChatBoxProps {
 	activeThread: UIThread | undefined;
 	messages: UIMessage[];
 	onSendMessage: (message: string) => void;
-	streamingMessage?: string;
+
 	isLoading?: boolean;
 	className?: string;
 }
@@ -22,7 +21,7 @@ export function ChatBox({
 	activeThread,
 	messages,
 	onSendMessage,
-	streamingMessage,
+
 	isLoading,
 	className,
 }: ChatBoxProps) {
@@ -73,12 +72,6 @@ export function ChatBox({
 					{messages.map((message) => (
 						<MessageBox key={message.id} message={message} />
 					))}
-
-					{/* Loading state */}
-					{isLoading && !streamingMessage && <LoadingMessage />}
-
-					{/* Streaming message */}
-					{streamingMessage && <StreamingMessage content={streamingMessage} />}
 				</div>
 			</ScrollArea>
 

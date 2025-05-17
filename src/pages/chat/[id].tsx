@@ -9,7 +9,7 @@ import KnowledgeBaseWidget from "~/components/chat/KnowledgeBaseWidget";
 import SiteFooter from "~/components/site-footer";
 import AppHeader from "~/components/site-header";
 import { Button } from "~/components/ui/button";
-import { Card, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { env } from "~/env";
 import { auth } from "~/server/auth";
@@ -17,6 +17,7 @@ import { db } from "~/server/db";
 import type { UIMessage } from "~/types/chat";
 import { api } from "~/utils/api";
 import { toast } from "sonner";
+import { MarkdownContent } from "~/components/chat/MarkdownContent";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await auth(context);
@@ -67,78 +68,41 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 export default function Page({ threadId }: { threadId: string }) {
 	const { data: session } = useSession();
+	console.log(" session: /chat/[id] = ", session);
 
 	const [messages, setMessages] = useState<UIMessage[]>([]);
 
-	const [streamingMessage, setStreamingMessage] = useState<string>("");
 	const [rateAgentMessage, setRateAgentMessage] = useState<string>("");
 	const [suggestAgentMessage, setSuggestAgentMessage] = useState<string>("");
 	const [solutionAgentMessage, setSolutionAgentMessage] = useState<string>("");
 
+	console.log("rateAgentMessage: ", rateAgentMessage);
+	console.log("suggestAgentMessage: ", suggestAgentMessage);
+	console.log("solutionAgentMessage: ", solutionAgentMessage);
+
 	const [isLoading, setIsLoading] = useState(false);
 
-	const { data: activeThread } = api.agent.getThread.useQuery({ threadId });
+	const { data: activeThread } = api.agent.getThread.useQuery(
+		{ threadId },
+		{
+			refetchInterval: 10,
+		},
+	);
+	const saveMessageMutation = api.agent.saveThreadMessage.useMutation();
 
 	const manualInterventionMutation =
 		api.agent.interveneWithThread.useMutation();
 
-	const { data: activeMessages } = api.agent.getThreadMessages.useQuery(
-		{
-			threadId,
-		},
-		{
-			enabled: activeThread?.isManualIntervention,
-			refetchInterval: 1000,
-			refetchIntervalInBackground: true,
-			refetchOnWindowFocus: true,
-		},
-	);
-
 	useEffect(() => {
-		// TODO fix the transition
-		if (activeMessages) {
-			setMessages([...activeMessages]);
-		}
-	}, [activeMessages]);
+		console.log("activeThread effect", activeThread);
 
-	useEffect(() => {
-		if (messages.length == 0 && activeThread) {
+		if (activeThread) {
 			setMessages([...activeThread.messages]);
 		}
 	}, [activeThread]);
 
-	const handleSendMessageToCompletion = async (newMessage: string) => {
-		const currentCount = messages.length;
-
-		const senderRole = session?.user.role == "user" ? "customer" : "csr";
-
-		console.log(
-			`[handleSendMessageToCompletion]: ${senderRole} is sending a message: ${newMessage}`,
-		);
-
-		setMessages((prevMessages) => {
-			return [
-				...prevMessages,
-				{
-					id: currentCount + 1,
-					sender: session?.user.name || "You",
-					avatar: session?.user.image || "",
-					content: newMessage,
-					timestamp: new Date().toISOString(),
-					role: senderRole,
-					isCurrentUser: true,
-				},
-			];
-		});
-
-		// call endpoint for creating message
-
-		/* 		if (senderRole == "csr") {
-			return;
-		} */
-
+	async function getAIStreamingResponse(newMessage: string) {
 		setIsLoading(true);
-		setStreamingMessage("");
 
 		try {
 			if (!session || !session.user.accessToken) {
@@ -157,6 +121,7 @@ export default function Page({ threadId }: { threadId: string }) {
 					body: JSON.stringify({
 						message: newMessage,
 						session_id: `thread-${threadId}`,
+						speaking_user: session.user.role == "user" ? "customer" : "csr",
 					}),
 				},
 			);
@@ -173,7 +138,9 @@ export default function Page({ threadId }: { threadId: string }) {
 			}
 
 			// Track the complete message outside of React state
-			let completeMessage = "";
+			let completeRateAgentMessage = "";
+			let completeSuggestAgentMessage = "";
+			let completeSolutionAgentMessage = "";
 
 			try {
 				while (true) {
@@ -191,43 +158,70 @@ export default function Page({ threadId }: { threadId: string }) {
 					for (const line of lines) {
 						try {
 							const data = JSON.parse(line);
-							completeMessage += data.content || "";
-							// Update UI with current progress
-							setStreamingMessage(completeMessage);
+							const source: "rate_agent" | "solution_agent" | "suggest_agent" =
+								data.source;
+
+							if (source == "rate_agent") {
+								completeRateAgentMessage += data.content || "";
+							} else if (source == "solution_agent") {
+								completeSolutionAgentMessage += data.content || "";
+							} else if (source == "suggest_agent") {
+								completeSuggestAgentMessage += data.content || "";
+							}
+
+							setRateAgentMessage(completeRateAgentMessage);
+							setSolutionAgentMessage(completeSolutionAgentMessage);
+							setSuggestAgentMessage(completeSuggestAgentMessage);
+
 							setIsLoading(false); // Hide loading state once we start receiving content
 						} catch (error) {
 							console.error("Error parsing stream data:", error);
 						}
 					}
 				}
-
-				// Update threads with the complete message
-				setMessages((prevMessages) => {
-					return [
-						...prevMessages,
-						{
-							id: currentCount + 2,
-							sender: "Path",
-							content: completeMessage,
-							timestamp: new Date().toISOString(),
-							role: "assistant",
-							isCurrentUser: false,
-							avatar: "/logo-blue.png",
-						},
-					];
-				});
 			} catch (error) {
 				console.error("Error reading stream:", error);
 				throw error;
 			} finally {
 				reader.releaseLock();
 				setIsLoading(false);
-				setStreamingMessage(""); // Clear the streaming message
 			}
 		} catch (error) {
 			console.error("Error in streaming:", error);
 			setIsLoading(false);
 		}
+	}
+
+	const handleNewSenderMessage = async (newMessage: string) => {
+		const senderRole = session?.user.role == "user" ? "customer" : "csr";
+
+		console.log(
+			`[handleSendMessageToCompletion]: ${senderRole} is sending a message: ${newMessage}`,
+		);
+
+		setMessages((prevMessages) => {
+			return [
+				...prevMessages,
+				{
+					id: prevMessages.length + 1,
+					sender: session?.user.name || "You",
+					senderEmail: session?.user.email || "",
+					avatar: session?.user.image || "",
+					content: newMessage,
+					timestamp: new Date().toISOString(),
+					role: senderRole,
+					isCurrentUser: true,
+				},
+			];
+		});
+
+		await saveMessageMutation.mutateAsync({
+			sessionId: threadId,
+			message: newMessage,
+			role: senderRole,
+		});
+
+		await getAIStreamingResponse(newMessage);
 	};
 
 	return (
@@ -268,8 +262,7 @@ export default function Page({ threadId }: { threadId: string }) {
 					<ChatBox
 						activeThread={activeThread}
 						messages={messages}
-						onSendMessage={handleSendMessageToCompletion}
-						streamingMessage={streamingMessage}
+						onSendMessage={handleNewSenderMessage}
 						isLoading={isLoading}
 					/>
 				)}
@@ -297,22 +290,54 @@ export default function Page({ threadId }: { threadId: string }) {
 								<CardTitle className="p-0">
 									Support Quality (rate_agent)
 								</CardTitle>
-								<Skeleton className="w-full h-32" />
+								{rateAgentMessage !== "" && (
+									<CardContent className="px-3 py-2 overflow-hidden">
+										<MarkdownContent
+											content={rateAgentMessage}
+											className="break-words"
+										/>
+									</CardContent>
+								)}
+								{rateAgentMessage === "" && (
+									<Skeleton className="w-full h-32" />
+								)}
 							</div>
 							<div className="flex flex-col space-y-1">
 								<CardTitle className="p-0">
 									Empathy Score (suggest_agent )
 								</CardTitle>
-								<Skeleton className="w-full h-32" />
+								{suggestAgentMessage !== "" && (
+									<CardContent className="px-3 py-2 overflow-hidden">
+										<MarkdownContent
+											content={suggestAgentMessage}
+											className="break-words"
+										/>
+									</CardContent>
+								)}
+								{suggestAgentMessage === "" && (
+									<Skeleton className="w-full h-32" />
+								)}
 							</div>
 						</div>
 
-						<div className="flex flex-col space-y-1 grow">
+						<Card className="flex flex-col space-y-1 grow">
 							<CardTitle className="p-0">
 								Solutions Builder (solution_agent)
 							</CardTitle>
-							<Skeleton className="w-full min-h-32 h-full" />
-						</div>
+
+							{solutionAgentMessage !== "" && (
+								<CardContent className="px-3 py-2 overflow-hidden">
+									<MarkdownContent
+										content={solutionAgentMessage}
+										className="break-words"
+									/>
+								</CardContent>
+							)}
+
+							{solutionAgentMessage === "" && (
+								<Skeleton className="w-full min-h-32 h-full" />
+							)}
+						</Card>
 					</Card>
 				)}
 			</div>

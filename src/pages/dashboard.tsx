@@ -77,7 +77,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		};
 	}
 
-	if (session.user.role !== "admin") {
+	if (session.user.role == "user") {
 		return {
 			redirect: {
 				destination: "/chats",
@@ -708,7 +708,7 @@ export default function Page() {
 					heading="Customer Support Dashboard"
 					description="Monitor and analyze your customer support performance metrics"
 				/>
-				<Tabs defaultValue="overview" className="space-y-4">
+				<Tabs defaultValue="chats" className="space-y-4">
 					<TabsList>
 						<TabsTrigger value="overview">Overview</TabsTrigger>
 						<TabsTrigger value="analytics">Analytics</TabsTrigger>
