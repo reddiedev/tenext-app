@@ -715,6 +715,8 @@ function AppHeader() {
 
 // Main Dashboard Page Component
 export default function Page() {
+	const { data: session } = useSession();
+	console.log(session);
 	return (
 		<div className="flex min-h-screen flex-col">
 			<AppHeader />

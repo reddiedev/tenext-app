@@ -1,11 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChatSidebar } from "~/components/chat/ChatSidebar";
 import { ChatBox } from "~/components/chat/ChatBox";
 import { useRouter } from "next/router";
 
 import type { GetServerSideProps, NextPage } from "next";
+import axios, { type AxiosResponse } from "axios";
+import { env } from "~/env";
+import { auth } from "~/server/auth";
+import { api } from "~/utils/api";
+import { useSession } from "next-auth/react";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
+	const session = await auth(context);
+
+	if (!session) {
+		return {
+			redirect: { destination: "/sign-in", permanent: false },
+		};
+	}
+
+	const email = session.user.email;
+	const password = "password";
+
+	const registerResponse = await axios
+		.post(env.NEXT_PUBLIC_BACKEND_URL + "/auth/register", {
+			email,
+			password,
+		})
+		.catch(console.error);
+
+	const loginResponse: AxiosResponse<{ message: string }> = await axios.post(
+		env.NEXT_PUBLIC_BACKEND_URL + "/auth/login",
+		{
+			email,
+			password,
+		},
+	);
+
+	const accessToken = loginResponse.data.message;
+
+	context.res.setHeader("Set-Cookie", [
+		`access_token=${loginResponse.data.message}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=3600`,
+	]);
+
 	// Extract the id parameter from the URL
 	const { id } = context.params!;
 
@@ -109,15 +146,13 @@ const initialThreads = [
 export default function Page({ id }: { id: string }) {
 	const router = useRouter();
 
+	const { data: session } = useSession();
+
 	const [threads, setThreads] = useState(initialThreads);
-	const [activeThreadId, setActiveThreadId] = useState(parseInt(id));
+
+	const activeThreadId = parseInt(id);
 
 	const activeThread = threads.find((thread) => thread.id === activeThreadId);
-
-	const handleThreadSelect = (threadId: number) => {
-		setActiveThreadId(threadId);
-		router.push(`/chat/${threadId}`);
-	};
 
 	const handleSendMessage = (newMessage: string) => {
 		const updatedThreads = threads.map((thread) => {
