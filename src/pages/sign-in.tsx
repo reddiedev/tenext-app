@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { BuildingIcon, CheckIcon, Loader2 } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -100,7 +101,7 @@ export function SigninForm() {
 					Enter your email and password to sign in
 				</CardDescription>
 			</CardHeader>
-			<CardContent>
+			<CardContent className="flex flex-col">
 				{isSuccess ? (
 					<div className="flex flex-col items-center justify-center space-y-2 py-6 text-center">
 						<div className="rounded-full bg-green-100 p-3">
@@ -118,6 +119,7 @@ export function SigninForm() {
 							<FormField
 								control={form.control}
 								name="email"
+								disabled
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Email</FormLabel>
@@ -125,6 +127,8 @@ export function SigninForm() {
 											<Input
 												type="email"
 												placeholder="john.doe@example.com"
+												disabled
+												className="disabled:cursor-not-allowed"
 												{...field}
 											/>
 										</FormControl>
@@ -136,11 +140,18 @@ export function SigninForm() {
 							<FormField
 								control={form.control}
 								name="password"
+								disabled
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="disabled:cursor-not-allowed">
 										<FormLabel>Password</FormLabel>
 										<FormControl>
-											<Input type="password" {...field} />
+											<Input
+												type="password"
+												placeholder="********"
+												disabled
+												className="disabled:cursor-not-allowed"
+												{...field}
+											/>
 										</FormControl>
 										<FormDescription>
 											Must be at least 8 characters
@@ -150,7 +161,7 @@ export function SigninForm() {
 								)}
 							/>
 
-							<Button type="submit" className="w-full" disabled={isSubmitting}>
+							<Button className="w-full" disabled={true}>
 								{isSubmitting ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -160,21 +171,31 @@ export function SigninForm() {
 									"Sign in"
 								)}
 							</Button>
-
-							<Separator />
-
-							<Button variant="outline" className="w-full">
-								<FcGoogle className="mr-2 h-4 w-4" />
-								Sign in with Google
-							</Button>
-
-							<Button variant="outline" className="w-full">
-								<BuildingIcon className="mr-2 h-4 w-4" />
-								Sign in with SSO
-							</Button>
 						</form>
 					</Form>
 				)}
+
+				<div className="flex flex-col gap-2 space-y-2">
+					<Separator className="w-full mt-4" />
+
+					<Button
+						onClick={async () =>
+							await signIn("google", {
+								callbackUrl: "/dashboard",
+							})
+						}
+						variant="outline"
+						className="w-full"
+					>
+						<FcGoogle className="mr-2 h-4 w-4" />
+						Sign in with Google
+					</Button>
+
+					<Button variant="outline" className="w-full" disabled>
+						<BuildingIcon className="mr-2 h-4 w-4" />
+						Sign in with SSO
+					</Button>
+				</div>
 			</CardContent>
 		</Card>
 	);
@@ -187,5 +208,3 @@ export default function Page() {
 		</main>
 	);
 }
-
-import { FcGoogle } from "react-icons/fc";
