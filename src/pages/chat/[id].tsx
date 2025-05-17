@@ -68,9 +68,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 export default function Page({ threadId }: { threadId: string }) {
 	const { data: session } = useSession();
-	console.log(" session: /chat/[id] = ", session);
 
 	const [messages, setMessages] = useState<UIMessage[]>([]);
+	const [processedMessages, setProcessedMessages] = useState<number[]>([]);
 
 	const [rateAgentMessage, setRateAgentMessage] = useState<string>("");
 	const [suggestAgentMessage, setSuggestAgentMessage] = useState<string>("");
@@ -85,7 +85,7 @@ export default function Page({ threadId }: { threadId: string }) {
 	const { data: activeThread } = api.agent.getThread.useQuery(
 		{ threadId },
 		{
-			refetchInterval: 10,
+			refetchInterval: 5000,
 		},
 	);
 	const saveMessageMutation = api.agent.saveThreadMessage.useMutation();
@@ -101,7 +101,19 @@ export default function Page({ threadId }: { threadId: string }) {
 		}
 	}, [activeThread]);
 
-	async function getAIStreamingResponse(newMessage: string) {
+	useEffect(() => {
+		if (messages.length > 0) {
+			const lastMessage = messages[messages.length - 1];
+
+			if (lastMessage && !processedMessages.includes(lastMessage.id)) {
+				getAIStreamingResponse(lastMessage.content, lastMessage.role);
+				setProcessedMessages((prev) => [...prev, lastMessage.id]);
+			}
+		}
+	}, [messages]);
+
+	async function getAIStreamingResponse(newMessage: string, role: string) {
+		console.log(`getAIStreamingResponse: ${newMessage}`);
 		setIsLoading(true);
 
 		try {
@@ -121,7 +133,7 @@ export default function Page({ threadId }: { threadId: string }) {
 					body: JSON.stringify({
 						message: newMessage,
 						session_id: `thread-${threadId}`,
-						speaking_user: session.user.role == "user" ? "customer" : "csr",
+						speaking_user: role,
 					}),
 				},
 			);
@@ -169,13 +181,19 @@ export default function Page({ threadId }: { threadId: string }) {
 								completeSuggestAgentMessage += data.content || "";
 							}
 
-							setRateAgentMessage(completeRateAgentMessage);
-							setSolutionAgentMessage(completeSolutionAgentMessage);
-							setSuggestAgentMessage(completeSuggestAgentMessage);
+							if (completeRateAgentMessage.length > 0) {
+								setRateAgentMessage(completeRateAgentMessage);
+							}
+							if (completeSolutionAgentMessage.length > 0) {
+								setSolutionAgentMessage(completeSolutionAgentMessage);
+							}
+							if (completeSuggestAgentMessage.length > 0) {
+								setSuggestAgentMessage(completeSuggestAgentMessage);
+							}
 
 							setIsLoading(false); // Hide loading state once we start receiving content
 						} catch (error) {
-							console.error("Error parsing stream data:", error);
+							continue;
 						}
 					}
 				}
@@ -220,8 +238,6 @@ export default function Page({ threadId }: { threadId: string }) {
 			message: newMessage,
 			role: senderRole,
 		});
-
-		await getAIStreamingResponse(newMessage);
 	};
 
 	return (
