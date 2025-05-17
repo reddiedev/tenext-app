@@ -47,12 +47,18 @@ export const agentRouter = createTRPCRouter({
 				});
 			}
 
+			const thread = await ctx.db.thread.findUnique({
+				where: {
+					cuid: input.threadId,
+				},
+			});
+
 			// TODO: get the thread from the database
-			const thread: UIThread = {
+			const UIThread: UIThread = {
 				id: input.threadId,
-				title: "New Chat",
+				title: thread?.title ?? "New Chat",
 				userEmail: ctx.session.user.email!,
-				isManualIntervention: false,
+				isManualIntervention: thread?.isManualIntevention ?? false,
 				messages: [
 					{
 						id: 1,
@@ -66,7 +72,41 @@ export const agentRouter = createTRPCRouter({
 				],
 			};
 
-			return thread;
+			return UIThread;
+		}),
+	// STAFF VIEW
+	interveneWithThread: protectedProcedure
+		.input(z.object({ threadId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			const accessToken = ctx.session.user.accessToken;
+
+			if (!accessToken) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "No access token",
+				});
+			}
+
+			if (ctx.session.user.role == "user") {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "User cannot intervene with a thread",
+				});
+			}
+
+			// TODO: intervene with the thread
+			await ctx.db.thread.update({
+				where: {
+					cuid: input.threadId,
+				},
+				data: {
+					isManualIntevention: true,
+				},
+			});
+
+			return {
+				success: true,
+			};
 		}),
 
 	// USER/STAFF VIEW

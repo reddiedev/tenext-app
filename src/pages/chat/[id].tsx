@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChatBox } from "~/components/chat/ChatBox";
 import axios from "axios";
-import { StepBackIcon } from "lucide-react";
+import { EditIcon, StepBackIcon } from "lucide-react";
 import type { GetServerSideProps } from "next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -16,6 +16,7 @@ import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 import type { UIMessage } from "~/types/chat";
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await auth(context);
@@ -78,6 +79,9 @@ export default function Page({ threadId }: { threadId: string }) {
 
 	const { data: activeThread } = api.agent.getThread.useQuery({ threadId });
 
+	const manualInterventionMutation =
+		api.agent.interveneWithThread.useMutation();
+
 	const { data: activeMessages } = api.agent.getThreadMessages.useQuery(
 		{
 			threadId,
@@ -98,7 +102,7 @@ export default function Page({ threadId }: { threadId: string }) {
 	}, [activeMessages]);
 
 	useEffect(() => {
-		if (activeThread) {
+		if (messages.length == 0 && activeThread) {
 			setMessages([...activeThread.messages]);
 		}
 	}, [activeThread]);
@@ -229,7 +233,29 @@ export default function Page({ threadId }: { threadId: string }) {
 	return (
 		<div className="flex flex-col min-h-screen w-full h-auto rounded-lg border bg-background">
 			<AppHeader />
-			<div className="flex items-center justify-end px-5 pt-2">
+			<div className="flex items-center justify-end px-5 pt-2 space-x-2">
+				{session?.user.role !== "user" && (
+					<Button
+						onClick={async () => {
+							toast.promise(
+								async () => {
+									await manualInterventionMutation.mutateAsync({
+										threadId,
+									});
+								},
+								{
+									loading: "Intervening with thread...",
+									success: "Thread intervened with successfully",
+									error: "Failed to intervene with thread",
+								},
+							);
+						}}
+						className="py-2 h-auto"
+					>
+						<EditIcon className="size-4 mr-2" />
+						Intervene Manually
+					</Button>
+				)}
 				<Button asChild className="py-2 h-auto">
 					<Link href="/chats">
 						<StepBackIcon className="size-4 mr-2" />

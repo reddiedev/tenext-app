@@ -7,7 +7,7 @@ import type { UIThread, UIMessage } from "~/types/chat";
 import { MessageBox } from "./MessageBox";
 import { LoadingMessage } from "./LoadingMessage";
 import { StreamingMessage } from "./StreamingMessage";
-import { Card, CardTitle, CardHeader } from "../ui/card";
+import { Card, CardTitle, CardHeader, CardDescription } from "../ui/card";
 
 interface ChatBoxProps {
 	activeThread: UIThread | undefined;
@@ -58,8 +58,13 @@ export function ChatBox({
 			className={cn("flex w-full flex-col space-y-0 gap-0 p-4 ", className)}
 		>
 			{/* Chat header */}
-			<CardHeader className="p-0">
+			<CardHeader className="p-0 space-y-0 gap-0">
 				<CardTitle className=" p-0">{activeThread.title}</CardTitle>
+				<CardDescription className=" p-0">
+					{activeThread.isManualIntervention
+						? "Manual Intervention"
+						: "Automatic Intervention"}
+				</CardDescription>
 			</CardHeader>
 
 			{/* Messages */}
