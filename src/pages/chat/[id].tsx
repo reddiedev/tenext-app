@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { ChatBox } from "~/components/chat/ChatBox";
-
 import axios from "axios";
 import { StepBackIcon } from "lucide-react";
 import type { GetServerSideProps } from "next";
@@ -109,6 +108,10 @@ export default function Page({ threadId }: { threadId: string }) {
 
 		const senderRole = session?.user.role == "user" ? "customer" : "csr";
 
+		console.log(
+			`[handleSendMessageToCompletion]: ${senderRole} is sending a message: ${newMessage}`,
+		);
+
 		setMessages((prevMessages) => {
 			return [
 				...prevMessages,
@@ -126,9 +129,9 @@ export default function Page({ threadId }: { threadId: string }) {
 
 		// call endpoint for creating message
 
-		if (senderRole == "csr") {
+		/* 		if (senderRole == "csr") {
 			return;
-		}
+		} */
 
 		setIsLoading(true);
 		setStreamingMessage("");

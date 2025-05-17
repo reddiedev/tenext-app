@@ -53,8 +53,14 @@ export const authConfig = {
 				},
 			};
 		},
-		signIn: ({ user }) => {
+		signIn: async ({ user }) => {
 			console.log("signIn:", user);
+			await db.user.update({
+				where: { id: user.id },
+				data: {
+					accessToken: null,
+				},
+			});
 
 			return true;
 		},

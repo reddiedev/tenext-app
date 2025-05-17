@@ -1,16 +1,18 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { BuildingIcon, CheckIcon, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { BuildingIcon, CheckIcon, Loader2 } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
+import * as z from "zod";
 
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/router";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "~/components/ui/card";
@@ -24,9 +26,6 @@ import {
 	FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { toast } from "sonner";
-import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/router";
 import { Separator } from "~/components/ui/separator";
 
 // Define the form validation schema for signin
