@@ -113,7 +113,6 @@ export default function Page({ threadId }: { threadId: string }) {
 				return;
 			}
 
-			console.log("a");
 			// Create streaming request
 			const response = await fetch(
 				`${env.NEXT_PUBLIC_BACKEND_URL}/agent/v1/chat_stream`,
@@ -130,8 +129,6 @@ export default function Page({ threadId }: { threadId: string }) {
 					}),
 				},
 			);
-
-			console.log("response: ", response);
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);

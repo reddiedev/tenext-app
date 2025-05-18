@@ -696,9 +696,15 @@ function TableSkeleton() {
 export default function Page() {
 	const { data: session } = useSession();
 
-	const { data: staff } = api.admin.getStaffUsers.useQuery();
-	const { data: admin } = api.admin.getAdminUsers.useQuery();
-	const { data: threads } = api.admin.getUserThreads.useQuery();
+	const staffQuery = api.admin.getStaffUsers.useQuery();
+	const adminQuery = api.admin.getAdminUsers.useQuery();
+	const threadsQuery = api.admin.getUserThreads.useQuery();
+
+	async function refresh() {
+		staffQuery.refetch();
+		adminQuery.refetch();
+		threadsQuery.refetch();
+	}
 
 	return (
 		<div className="flex min-h-screen flex-col">
@@ -816,8 +822,8 @@ export default function Page() {
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
-								{threads ? (
-									<ThreadsTable threads={threads} />
+								{threadsQuery.data ? (
+									<ThreadsTable threads={threadsQuery.data} />
 								) : (
 									<div className="h-[400px] flex items-center justify-center border rounded-md">
 										<p className="text-muted-foreground">
@@ -845,8 +851,8 @@ export default function Page() {
 										</CardDescription>
 									</CardHeader>
 									<CardContent>
-										{staff ? (
-											<StaffUsersTable staffUsers={staff} />
+										{staffQuery.data ? (
+											<StaffUsersTable staffUsers={staffQuery.data} />
 										) : (
 											<div className="flex justify-center items-center h-32 border rounded-md">
 												<p className="text-muted-foreground">
@@ -865,8 +871,8 @@ export default function Page() {
 										</CardDescription>
 									</CardHeader>
 									<CardContent>
-										{admin ? (
-											<AdminUsersTable adminUsers={admin} />
+										{adminQuery.data ? (
+											<AdminUsersTable adminUsers={adminQuery.data} />
 										) : (
 											<div className="flex justify-center items-center h-32 border rounded-md">
 												<p className="text-muted-foreground">

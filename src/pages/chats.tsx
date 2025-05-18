@@ -1,7 +1,7 @@
 import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { MessageSquare, PlusCircle } from "lucide-react";
+import { LayoutDashboardIcon, MessageSquare, PlusCircle } from "lucide-react";
 import type { GetServerSideProps } from "next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -90,13 +90,23 @@ export default function ChatPage() {
 			<main className="flex-1 p-6">
 				<div className="flex justify-between items-center mb-6">
 					<h1 className="text-2xl font-bold">Recent Conversations</h1>
-					<Button
-						onClick={handleCreateNewChat}
-						className="flex items-center gap-2"
-					>
-						<PlusCircle className="size-4" />
-						New Chat
-					</Button>
+					<div>
+						{session?.user.role !== "user" && (
+							<Button asChild className="py-2 h-auto">
+								<Link href="/dashboard">
+									<LayoutDashboardIcon className="size-4 mr-2" />
+									Back to Dashboard
+								</Link>
+							</Button>
+						)}
+						<Button
+							onClick={handleCreateNewChat}
+							className="flex items-center gap-2"
+						>
+							<PlusCircle className="size-4" />
+							New Chat
+						</Button>
+					</div>
 				</div>
 
 				{isLoading ? (
