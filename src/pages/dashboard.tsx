@@ -6,6 +6,7 @@ import {
 	Clock,
 	MessageSquare,
 	MoreHorizontal,
+	RefreshCcw,
 	ThumbsUp,
 } from "lucide-react";
 import * as React from "react";
@@ -701,9 +702,9 @@ export default function Page() {
 	const threadsQuery = api.admin.getUserThreads.useQuery();
 
 	async function refresh() {
-		staffQuery.refetch();
-		adminQuery.refetch();
-		threadsQuery.refetch();
+		await staffQuery.refetch();
+		await adminQuery.refetch();
+		await threadsQuery.refetch();
 	}
 
 	return (
@@ -815,11 +816,18 @@ export default function Page() {
 					</TabsContent>
 					<TabsContent value="chats" className="space-y-4">
 						<Card>
-							<CardHeader>
-								<CardTitle>All Chats</CardTitle>
-								<CardDescription>
-									Manage and view all support chats
-								</CardDescription>
+							<CardHeader className="flex flex-row items-center justify-between">
+								<div>
+									<CardTitle>All Chats</CardTitle>
+									<CardDescription>
+										Manage and view all support chats
+									</CardDescription>
+								</div>
+								<div>
+									<Button onClick={refresh}>
+										<RefreshCcw className="size-4 mr-2" /> Refresh
+									</Button>
+								</div>
 							</CardHeader>
 							<CardContent>
 								{threadsQuery.data ? (

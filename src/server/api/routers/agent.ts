@@ -28,9 +28,37 @@ export const agentRouter = createTRPCRouter({
 		}
 
 		// TODO: get threads from BE
-		const threads: UIThread[] = [];
+		const threads = await ctx.db.thread.findMany({
+			where: {
+				userId: ctx.session.user.id,
+			},
+			include: {
+				messages: {
+					include: {
+						user: true,
+					},
+				},
+				user: true,
+			},
+		});
 
-		return threads;
+		const formattedThreads: UIThread[] = threads.map((thread) => ({
+			id: thread.cuid,
+			title: thread.title ?? "New Chat",
+			userEmail: thread.user.email ?? "",
+			isManualIntervention: thread.isManualIntevention ?? false,
+			messages: thread.messages.map((message) => ({
+				id: message.id,
+				content: message.content,
+				role: message.role as UIMessage["role"],
+				sender: message.user.name ?? "",
+				senderEmail: message.user.email ?? "",
+				timestamp: dayjs(message.createdAt).toISOString(),
+				isCurrentUser: message.userId == ctx.session.user.id,
+			})),
+		}));
+
+		return formattedThreads;
 	}),
 
 	// CUSTOMER/STAFF VIEW

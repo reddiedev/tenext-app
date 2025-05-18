@@ -90,7 +90,7 @@ export default function ChatPage() {
 			<main className="flex-1 p-6">
 				<div className="flex justify-between items-center mb-6">
 					<h1 className="text-2xl font-bold">Recent Conversations</h1>
-					<div>
+					<div className="flex items-center gap-2 flex-wrap">
 						{session?.user.role !== "user" && (
 							<Button asChild className="py-2 h-auto">
 								<Link href="/dashboard">
