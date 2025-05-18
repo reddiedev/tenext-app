@@ -31,13 +31,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 	const email = session.user.email;
 	const password = "password";
 
-	await axios
-		.post(env.NEXT_PUBLIC_BACKEND_URL + "/auth/register", {
-			email,
-			password,
-		})
-		.catch(console.error);
-
 	const loginResponse = await axios.post(
 		env.NEXT_PUBLIC_BACKEND_URL + "/auth/login",
 		{
@@ -120,9 +113,10 @@ export default function Page({ threadId }: { threadId: string }) {
 				return;
 			}
 
+			console.log("a");
 			// Create streaming request
 			const response = await fetch(
-				`http://localhost:8000/agent/v1/chat_stream`,
+				`http://5.223.54.94:8000/agent/v1/chat_stream`,
 				{
 					method: "POST",
 					headers: {
@@ -136,6 +130,8 @@ export default function Page({ threadId }: { threadId: string }) {
 					}),
 				},
 			);
+
+			console.log("response: ", response);
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
