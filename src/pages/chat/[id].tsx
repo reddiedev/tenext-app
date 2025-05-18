@@ -28,34 +28,31 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		};
 	}
 
-	let accessToken = session.user.accessToken;
-	if (!accessToken) {
-		const email = session.user.email;
-		const password = "password";
+	const email = session.user.email;
+	const password = "password";
 
-		await axios
-			.post(env.NEXT_PUBLIC_BACKEND_URL + "/auth/register", {
-				email,
-				password,
-			})
-			.catch(console.error);
+	await axios
+		.post(env.NEXT_PUBLIC_BACKEND_URL + "/auth/register", {
+			email,
+			password,
+		})
+		.catch(console.error);
 
-		const loginResponse = await axios.post(
-			env.NEXT_PUBLIC_BACKEND_URL + "/auth/login",
-			{
-				email,
-				password,
-			},
-		);
+	const loginResponse = await axios.post(
+		env.NEXT_PUBLIC_BACKEND_URL + "/auth/login",
+		{
+			email,
+			password,
+		},
+	);
 
-		accessToken = loginResponse.data.message;
+	const accessToken = loginResponse.data.message;
 
-		if (accessToken) {
-			await db.user.update({
-				where: { id: session.user.id },
-				data: { accessToken },
-			});
-		}
+	if (accessToken) {
+		await db.user.update({
+			where: { id: session.user.id },
+			data: { accessToken },
+		});
 	}
 
 	// Extract the id parameter from the URL
