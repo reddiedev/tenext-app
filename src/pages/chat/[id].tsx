@@ -125,7 +125,7 @@ export default function Page({ threadId }: { threadId: string }) {
 
 			// Create streaming request
 			const response = await fetch(
-				`http://5.223.54.94:8000/agent/v1/chat_stream`,
+				`http://localhost:8000/agent/v1/chat_stream`,
 				{
 					method: "POST",
 					headers: {
