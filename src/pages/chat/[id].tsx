@@ -116,7 +116,7 @@ export default function Page({ threadId }: { threadId: string }) {
 			console.log("a");
 			// Create streaming request
 			const response = await fetch(
-				`http://5.223.54.94:8000/agent/v1/chat_stream`,
+				`${env.NEXT_PUBLIC_BACKEND_URL}/agent/v1/chat_stream`,
 				{
 					method: "POST",
 					headers: {
