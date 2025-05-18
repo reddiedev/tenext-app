@@ -280,56 +280,44 @@ export default function Page({ threadId }: { threadId: string }) {
 
 						<CardTitle className="p-0 pt-5">Tools</CardTitle>
 
-						<Card className="flex flex-col space-y-1">
-							<CardTitle className="p-0 px-3">
-								Support Quality (rate_agent)
-							</CardTitle>
-							{rateAgentMessage !== "" && (
+						{rateAgentMessage !== "" && (
+							<Card className="flex flex-col space-y-1">
+								<CardTitle className="p-0 px-3">Rate Agent</CardTitle>(
 								<CardContent className="px-3 py-2 overflow-hidden">
 									<MarkdownContent
 										content={rateAgentMessage}
 										className="break-words"
 									/>
 								</CardContent>
-							)}
-							{rateAgentMessage === "" && <Skeleton className="w-full h-32" />}
-						</Card>
+								)
+							</Card>
+						)}
 
-						<Card className="flex flex-col space-y-1">
-							<CardTitle className="p-0 px-3">
-								Empathy Score (suggest_agent )
-							</CardTitle>
-							{suggestAgentMessage !== "" && (
+						{suggestAgentMessage !== "" && (
+							<Card className="flex flex-col space-y-1">
+								<CardTitle className="p-0 px-3">Suggest Agent</CardTitle>(
 								<CardContent className="px-3 py-2 overflow-hidden">
 									<MarkdownContent
 										content={suggestAgentMessage}
 										className="break-words"
 									/>
 								</CardContent>
-							)}
-							{suggestAgentMessage === "" && (
-								<Skeleton className="w-full h-32" />
-							)}
-						</Card>
+								)
+							</Card>
+						)}
 
-						<Card className="flex flex-col space-y-1 grow">
-							<CardTitle className="p-0 px-3">
-								Solutions Builder (solution_agent)
-							</CardTitle>
+						{solutionAgentMessage !== "" && (
+							<Card className="flex flex-col space-y-1">
+								<CardTitle className="p-0 px-3">Solution Agent</CardTitle>
 
-							{solutionAgentMessage !== "" && (
 								<CardContent className="px-3 py-2 overflow-hidden">
 									<MarkdownContent
 										content={solutionAgentMessage}
 										className="break-words"
 									/>
 								</CardContent>
-							)}
-
-							{solutionAgentMessage === "" && (
-								<Skeleton className="w-full min-h-32 h-full" />
-							)}
-						</Card>
+							</Card>
+						)}
 					</Card>
 				)}
 			</div>
